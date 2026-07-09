@@ -1387,6 +1387,15 @@ WorldModel::updateAfterFullstate( const FullstateSensor & fullstate,
     M_ball.updateByFullstate( fullstate.ball().pos_,
                               fullstate.ball().vel_,
                               self().pos() );
+
+    // v20: fullstate ball z/vel_z are ground truth (unnoised) -- commit
+    // directly, bypassing the elevation-denoise math used in localizeBall().
+    // FullstateSensor::BallT::pos_z_/vel_z_ simply stay at their
+    // constructed 0.0 default on a pre-v20 server, so this is a no-op
+    // (commits z=0.0/vel_z=0.0 with count 0, matching the existing
+    // grounded-ball assumption) unless the server actually sent them.
+    M_ball.updateOnlyZ( fullstate.ball().pos_z_, 0 );
+    M_ball.updateOnlyVelZ( fullstate.ball().vel_z_, 0 );
 }
 
 /*-------------------------------------------------------------------*/
@@ -2268,6 +2277,41 @@ WorldModel::localizeBall( const VisualSensor & see,
                       __FILE__" (localizeBall) invalid rpos. cannot calc current seen pos" );
 #endif
         return;
+    }
+
+    //////////////////////////////////////////////////////////////////
+    // v20: elevation -> ball height (z) denoise.
+    // Only when the seen ball actually carries an elevation token (a
+    // v20+ server running with 2d_mode=false); on a 2d_mode=true or
+    // pre-v20 server, elevation_ stays at VisualSensor::ELEVATION_ERR
+    // and this whole block is skipped, leaving every existing x/y
+    // localizeBall() code path completely untouched.
+    if ( ! see.balls().empty()
+         && see.balls().front().elevation_ != VisualSensor::ELEVATION_ERR
+         && see.balls().front().dist_ > 0.0 )
+    {
+        const double noisy_elevation = see.balls().front().elevation_;
+        const double noisy_dist = see.balls().front().dist_;
+        const double actual_dist = rpos.r();
+
+        // Per rcssserver's 3D protocol migration notes, elevation is
+        // noised via a dimensionless noisy/actual distance ratio applied
+        // multiplicatively to the true elevation angle:
+        //   noisy_elevation = actual_elevation * ( noisy_dist / actual_dist )
+        // Invert to recover the denoised elevation, then recover height
+        // from the (already denoised) ground-plane distance:
+        //   actual_elevation = noisy_elevation * ( actual_dist / noisy_dist )
+        //   z = actual_dist * tan( actual_elevation )
+        const double denoised_elevation = noisy_elevation * ( actual_dist / noisy_dist );
+        const double z = actual_dist * std::tan( denoised_elevation );
+
+        M_ball.updateOnlyZ( z, 0 );
+
+#ifdef DEBUG_PRINT_BALL_UPDATE
+        dlog.addText( Logger::WORLD,
+                      __FILE__" (localizeBall) z=%.3f noisy_elevation=%.5f noisy_dist=%.3f actual_dist=%.3f",
+                      z, noisy_elevation, noisy_dist, actual_dist );
+#endif
     }
 
     //////////////////////////////////////////////////////////////////

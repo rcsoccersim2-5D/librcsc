@@ -160,6 +160,7 @@ operator<<( std::ostream & os,
 
 const double VisualSensor::DIST_ERR = std::numeric_limits< double >::max();
 const double VisualSensor::DIR_ERR = -360;
+const double VisualSensor::ELEVATION_ERR = std::numeric_limits< double >::max();
 
 /*-------------------------------------------------------------------*/
 /*!
@@ -744,12 +745,37 @@ VisualSensor::parseBall( const char * tok,
     }
     tok = next;
 
-    // read velocity info. order is dist_chg -> dir_chg
-    if ( *tok != ')' )
+    // read velocity info (dist_chg -> dir_chg) and the v20 trailing
+    // elevation token. There are 4 possible trailing shapes:
+    //   0 remaining numbers: "(name dist dir)"                       (pre-v20, no vel)
+    //   1 remaining number:  "(name dist dir elevation)"             (v20, no vel)
+    //   2 remaining numbers: "(name dist dir dist_chg dir_chg)"      (pre-v20, with vel)
+    //   3 remaining numbers: "(name dist dir dist_chg dir_chg elevation)" (v20, with vel)
+    // A simple "read-2-if-not-')'" heuristic cannot disambiguate the
+    // 1-remaining (elevation-only) case from the 2-remaining (vel-only)
+    // case, so count the remaining numeric tokens before the closing
+    // ')' first.
+    int remaining = 0;
+    {
+        const char * p = tok;
+        while ( *p != '\0' && *p != ')' )
+        {
+            while ( *p == ' ' ) ++p;
+            if ( *p == ')' || *p == '\0' ) break;
+            char * pend;
+            std::strtod( p, &pend );
+            if ( pend == p ) break; // not a number, bail defensively
+            ++remaining;
+            p = pend;
+        }
+    }
+
+    if ( remaining >= 2 )
     {
         info->dist_chng_ = std::strtod( tok, &next );
         tok = next;
-        info->dir_chng_ = std::strtod( tok, NULL );
+        info->dir_chng_ = std::strtod( tok, &next );
+        tok = next;
         info->has_vel_ = true;
         if ( info->dist_chng_ == -HUGE_VAL
              || info->dist_chng_ == HUGE_VAL
@@ -764,10 +790,31 @@ VisualSensor::parseBall( const char * tok,
             info->has_vel_ = false;
             return false;
         }
+        remaining -= 2;
+    }
+
+    // v20: optional trailing elevation token. Absent on pre-v20 servers
+    // and on v20+ servers running 2d_mode=true -- in both cases
+    // info->elevation_ simply stays at its constructed ELEVATION_ERR
+    // sentinel and every existing dist_/dir_/has_vel_ code path above is
+    // completely unaffected.
+    if ( remaining >= 1 )
+    {
+        info->elevation_ = std::strtod( tok, &next );
+        if ( info->elevation_ == -HUGE_VAL
+             || info->elevation_ == HUGE_VAL )
+        {
+            info->elevation_ = VisualSensor::ELEVATION_ERR;
+        }
+        else
+        {
+            tok = next;
+        }
     }
 
     return true;
 }
+
 
 /*-------------------------------------------------------------------*/
 /*!

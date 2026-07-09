@@ -51,6 +51,7 @@ class VisualSensor {
 public:
     static const double DIST_ERR; //!< error value
     static const double DIR_ERR; //!< error value
+    static const double ELEVATION_ERR; //!< v20. sentinel for "no elevation token sent" (pre-v20 servers / 2d_mode=true)
 
     /*!
       \brief seen object type
@@ -194,11 +195,17 @@ public:
     struct BallT
         : public MovableT {
 
+        //! v20. seen elevation angle (radians); stays at ELEVATION_ERR when
+        //! the server never sends the trailing token (pre-v20 protocol, or
+        //! a v20+ server running with 2d_mode=true).
+        double elevation_;
+
         /*!
           \brief init member variables by error value
         */
         BallT()
             : MovableT()
+            , elevation_( VisualSensor::ELEVATION_ERR )
           { }
         /*!
           \brief clear all data
@@ -206,6 +213,7 @@ public:
         void reset()
           {
               MovableT::reset();
+              elevation_ = VisualSensor::ELEVATION_ERR;
           }
     };
 

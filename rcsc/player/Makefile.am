@@ -12,6 +12,7 @@ librcsc_player_la_SOURCES = \
 	fullstate_sensor.cpp \
 	intercept.cpp \
 	intercept_simulator_player.cpp \
+	intercept_simulator_self_3d.cpp \
 	intercept_simulator_self_v17.cpp \
 	intercept_table.cpp \
 	localization_default.cpp \
@@ -45,6 +46,7 @@ librcsc_playerinclude_HEADERS = \
 	intercept.h \
 	intercept_simulator_player.h \
 	intercept_simulator_self.h \
+	intercept_simulator_self_3d.h \
 	intercept_simulator_self_v17.h \
 	intercept_table.h \
 	localization.h \

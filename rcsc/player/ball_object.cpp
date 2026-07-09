@@ -78,6 +78,10 @@ BallObject::BallObject()
       M_heard_vel_count( 1000 ),
       M_lost_count( 0 ),
       M_ghost_count( 0 ),
+      M_pos_z( 0.0 ),
+      M_pos_z_count( 1000 ),
+      M_vel_z( 0.0 ),
+      M_vel_z_count( 1000 ),
       M_dist_from_self( 1000.0 ),
       M_angle_from_self( 0.0 )
 {
@@ -493,6 +497,42 @@ BallObject::updateOnlyVel( const Vector2D & vel,
 
     M_seen_vel = vel;
     M_seen_vel_count = vel_count;
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+
+ */
+void
+BallObject::updateOnlyZ( const double pos_z,
+                         const int pos_z_count )
+{
+#ifdef DEBUG_PRINT
+    dlog.addText( Logger::WORLD,
+                  __FILE__" (updateOnlyZ)"
+                  " pos_z=%.3f count=%d",
+                  pos_z, pos_z_count );
+#endif
+    M_pos_z = pos_z;
+    M_pos_z_count = pos_z_count;
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+
+ */
+void
+BallObject::updateOnlyVelZ( const double vel_z,
+                            const int vel_z_count )
+{
+#ifdef DEBUG_PRINT
+    dlog.addText( Logger::WORLD,
+                  __FILE__" (updateOnlyVelZ)"
+                  " vel_z=%.3f count=%d",
+                  vel_z, vel_z_count );
+#endif
+    M_vel_z = vel_z;
+    M_vel_z_count = vel_z_count;
 }
 
 /*-------------------------------------------------------------------*/

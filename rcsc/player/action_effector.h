@@ -247,11 +247,23 @@ public:
       \brief create kick command and its effect with kick parameter
       \param power kick power for command argument
       \param rel_dir kick direction relative to body angle for command argument
+      \param loft v20 3D extension loft angle for command argument. defaults to
+      0.0 (flat/grounded kick, byte-for-byte the pre-v20 wire format).
 
       power is normalized by server parameter
     */
     void setKick( const double & power,
-                  const AngleDeg & rel_dir );
+                  const AngleDeg & rel_dir,
+                  const double & loft = 0.0 );
+
+    /*!
+      \brief v20 3D extension: create stop_ball command.
+
+      deadens the ball's velocity while it is kickable. Occupies the same
+      body-command slot as kick/dash/turn/move/catch/tackle -- mutually
+      exclusive with those commands in a single cycle.
+    */
+    void setStopBall();
 
     /*!
       \brief create dash command and its effect with dash parameter

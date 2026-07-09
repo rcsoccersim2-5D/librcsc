@@ -236,14 +236,50 @@ FullstateSensor::parseV8( const char * msg,
     }
 
     // ball info
-    // ((b) <pos.x> <pos.y> <vel.x> <vel.y>)
+    // pre-v20: ((b) <pos.x> <pos.y> <vel.x> <vel.y>)
+    // v20+:    ((b) <pos.x> <pos.y> <pos.z> <vel.x> <vel.y> <vel.z>)
+    // NOTE: on the wire, z is inserted BETWEEN pos.y and vel.x (matching
+    // rcssserver's SerializerPlayerStdv20::serializeFSBall3D(), which
+    // writes x, y, z, vel_x, vel_y, vel_z in that order) -- it is NOT
+    // appended after vel.y. Disambiguate the two shapes by counting how
+    // many more numeric tokens remain before the ball block's closing
+    // ')': 2 remaining => pre-v20 (vel.x, vel.y only); 4 remaining =>
+    // v20+ (z, vel.x, vel.y, vel.z).
     while ( *msg != '\0' && *msg != '(' ) ++msg; // skip to (ball
     while ( *msg != '\0' && *msg != ' ' ) ++msg; // skip "(ball"
 
     M_ball.pos_.x = std::strtod( msg, &next ); msg = next;
     M_ball.pos_.y = std::strtod( msg, &next ); msg = next;
-    M_ball.vel_.x = std::strtod( msg, &next ); msg = next;
-    M_ball.vel_.y = std::strtod( msg, &next ); msg = next;
+
+    {
+        int remaining = 0;
+        const char * p = msg;
+        while ( *p != '\0' && *p != ')' )
+        {
+            while ( *p == ' ' ) ++p;
+            if ( *p == ')' || *p == '\0' ) break;
+            char * pend;
+            std::strtod( p, &pend );
+            if ( pend == p ) break; // not a number, bail defensively
+            ++remaining;
+            p = pend;
+        }
+
+        if ( remaining >= 4 )
+        {
+            M_ball.pos_z_ = std::strtod( msg, &next ); msg = next;
+        }
+
+        M_ball.vel_.x = std::strtod( msg, &next ); msg = next;
+        M_ball.vel_.y = std::strtod( msg, &next ); msg = next;
+
+        if ( remaining >= 4 )
+        {
+            M_ball.vel_z_ = std::strtod( msg, &next ); msg = next;
+        }
+    }
+
+
 
     //((p {l|r} <unum>{g|<player_type_id>}) <pos.x> <pos.y>
     //   <vel.x> <vel.y> <body_angle> <neck_angle>

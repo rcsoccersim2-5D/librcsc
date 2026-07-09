@@ -619,11 +619,12 @@ ActionEffector::clearAllCommands()
 */
 void
 ActionEffector::setKick( const double & power,
-                         const AngleDeg & rel_dir )
+                         const AngleDeg & rel_dir,
+                         const double & loft )
 {
     dlog.addText( Logger::ACTION,
-                   __FILE__" (setKick) register kick. power= %.1f, rel_dir= %.1f",
-                  power, rel_dir.degree() );
+                   __FILE__" (setKick) register kick. power= %.1f, rel_dir= %.1f, loft= %.1f",
+                  power, rel_dir.degree(), loft );
 
     double command_power = power;
     if ( command_power > ServerParam::i().maxPower() + 0.01 )
@@ -666,7 +667,7 @@ ActionEffector::setKick( const double & power,
         delete M_command_body;
         M_command_body = nullptr;
     }
-    M_command_body = new PlayerKickCommand( command_power, rel_dir.degree() );
+    M_command_body = new PlayerKickCommand( command_power, rel_dir.degree(), loft );
 
     // set estimated action effect
     M_kick_accel.setPolar( command_power * M_agent.world().self().kickRate(),
@@ -1262,6 +1263,26 @@ ActionEffector::setMove( const double & x,
     M_command_body = new PlayerMoveCommand( command_x, command_y );
 
     M_move_pos.assign( command_x, command_y );
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+
+*/
+void
+ActionEffector::setStopBall()
+{
+    dlog.addText( Logger::ACTION,
+                  __FILE__" (setStopBall) register stop_ball" );
+
+    //////////////////////////////////////////////////
+    // create command object
+    if ( M_command_body )
+    {
+        delete M_command_body;
+        M_command_body = nullptr;
+    }
+    M_command_body = new PlayerStopBallCommand();
 }
 
 /*-------------------------------------------------------------------*/

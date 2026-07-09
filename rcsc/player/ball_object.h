@@ -34,10 +34,12 @@
 
 #include <rcsc/common/server_param.h>
 #include <rcsc/geom/vector_2d.h>
+#include <rcsc/geom/vector_3d.h>
 #include <rcsc/game_time.h>
 #include <rcsc/soccer_math.h>
 #include <rcsc/math_util.h>
 
+#include <cmath>
 #include <list>
 
 namespace rcsc {
@@ -95,6 +97,18 @@ private:
     int M_lost_count; //!< cycle count since the ball lost detection
 
     int M_ghost_count; //!< ghost flag
+
+    // v20: 3D ball extension. z/vel_z belief mirrors the existing pos/vel
+    // confidence-counter convention above (do NOT invent a different
+    // staleness model). On a 2d_mode=true (or pre-v20) server, neither
+    // member is ever committed, so M_pos_z/M_vel_z simply stay at their
+    // constructed defaults (0.0) and M_pos_z_count/M_vel_z_count stay
+    // at the "long stale" sentinel, exactly like the other *_count
+    // members below when no observation has ever arrived.
+    double M_pos_z; //!< estimated z (height) position
+    int M_pos_z_count; //!< cycle count since the last z observation
+    double M_vel_z; //!< estimated z (height) velocity
+    int M_vel_z_count; //!< cycle count since the last z velocity observation
 
     double M_dist_from_self; //!< estimated distance from self
     AngleDeg M_angle_from_self; //!< estimated global angle from self
@@ -247,6 +261,50 @@ public:
     int lostCount() const { return M_lost_count; }
 
     /*!
+      \brief v20. get estimated z (height) position
+      \return z coordinate value
+    */
+    double posZ() const { return M_pos_z; }
+
+    /*!
+      \brief v20. get z position accuracy count
+      \return cycle count from last z observation
+    */
+    int posZCount() const { return M_pos_z_count; }
+
+    /*!
+      \brief v20. get estimated z (height) velocity
+      \return z velocity value
+    */
+    double velZ() const { return M_vel_z; }
+
+    /*!
+      \brief v20. get z velocity accuracy count
+      \return cycle count from last z velocity observation
+    */
+    int velZCount() const { return M_vel_z_count; }
+
+    /*!
+      \brief v20. get the estimated 3D position (ground-plane pos() + height posZ()).
+      \return new Vector3D combining the existing 2D belief with the z belief
+    */
+    Vector3D pos3D() const { return Vector3D( pos(), M_pos_z ); }
+
+    /*!
+      \brief v20. check whether the ball is believed to be on the ground.
+      True when the z belief is both reasonably fresh (mirrors the same
+      confidence-counter convention as posValid()) and effectively zero.
+      Always true on a 2d_mode=true (or pre-v20) server, since z never
+      leaves its constructed default of 0.0 there.
+      \return true if the ball is (believed to be) grounded
+    */
+    bool isGrounded() const
+      {
+          return ( M_pos_z_count < S_pos_count_thr
+                    && std::fabs( M_pos_z ) < Vector3D::EPSILON );
+      }
+
+    /*!
       \brief velify global position accuracy
       \return true if position has enough accuracy
     */
@@ -365,6 +423,24 @@ public:
     void updateOnlyVel( const Vector2D & vel,
                         const Vector2D & vel_err,
                         const int vel_count );
+
+    /*!
+      \brief v20. update z (height) position using see/fullstate info
+      \param pos_z estimated (or, for fullstate, exact) z position
+      \param pos_z_count new accuracy value of the z position
+      (0 for fullstate ground truth)
+    */
+    void updateOnlyZ( const double pos_z,
+                      const int pos_z_count );
+
+    /*!
+      \brief v20. update z (height) velocity using fullstate info
+      \param vel_z estimated (or, for fullstate, exact) z velocity
+      \param vel_z_count new accuracy value of the z velocity
+      (0 for fullstate ground truth)
+    */
+    void updateOnlyVelZ( const double vel_z,
+                         const int vel_z_count );
 
     /*!
       \brief update by other player's kickable effect

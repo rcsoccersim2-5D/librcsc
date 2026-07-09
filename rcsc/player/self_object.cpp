@@ -1059,7 +1059,9 @@ SelfObject::updateBallInfo( const BallObject & ball )
         if ( ball.seenPosCount() >= 1 ) buf = 0.155;
         if ( ball.seenPosCount() >= 2 ) buf = 0.255;
 
-        if ( ball.distFromSelf() <= playerType().kickableArea() - buf )
+        if ( ball.distFromSelf() <= playerType().kickableArea() - buf
+             && ( SP.is2dMode()
+                  || ball.posZ() <= SP.playerHeight() ) )
         {
             M_kickable = true;
         }
@@ -1067,6 +1069,7 @@ SelfObject::updateBallInfo( const BallObject & ball )
         M_kick_rate = ptype.kickRate( ball.distFromSelf(),
                                       ( ball.angleFromSelf() - body() ).degree() );
     }
+
 
     //
     // catch probability
@@ -1145,7 +1148,9 @@ SelfObject::updateKickableState( const BallObject & ball,
 {
     if ( ! M_kickable
          && ball.seenPosCount() == 0
-         && ball.distFromSelf() < playerType().kickableArea() - 0.001 )
+         && ball.distFromSelf() < playerType().kickableArea() - 0.001
+         && ( ServerParam::i().is2dMode()
+              || ball.posZ() <= ServerParam::i().playerHeight() ) )
     {
 
         if ( self_reach_cycle >= 10 // XXX magic number XXX

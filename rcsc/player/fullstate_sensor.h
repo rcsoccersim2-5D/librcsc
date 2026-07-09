@@ -55,6 +55,20 @@ public:
     struct BallT {
         Vector2D pos_; //!< ball position
         Vector2D vel_; //!< ball velocity
+        //! v20. ball height (ground truth); stays 0.0 on a pre-v20 server
+        double pos_z_;
+        //! v20. ball vertical velocity (ground truth); stays 0.0 on a pre-v20 server
+        double vel_z_;
+
+        /*!
+          \brief init member variables by zero value
+        */
+        BallT()
+            : pos_( 0.0, 0.0 ),
+              vel_( 0.0, 0.0 ),
+              pos_z_( 0.0 ),
+              vel_z_( 0.0 )
+          { }
     };
 
     /*!

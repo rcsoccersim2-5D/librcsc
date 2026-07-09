@@ -207,10 +207,24 @@ public:
       \brief register kick command
       \param power command argument: kick power
       \param rel_dir command argument kick direction relative to body angle
+      \param loft command argument: v20 3D extension loft angle. defaults to
+      0.0 (flat/grounded kick, same as pre-v20 behavior) -- existing call
+      sites that never pass loft are unaffected.
       \return true if successfully registered.
     */
     bool doKick( const double & power,
-                 const AngleDeg & rel_dir );
+                 const AngleDeg & rel_dir,
+                 const double & loft = 0.0 );
+
+    /*!
+      \brief v20 3D extension: register stop_ball command. deadens the
+      ball's velocity while it is kickable. Silently rejected server-side
+      (like doMove()'s target) when 2d_mode==true or the ball is not
+      currently kickable -- no error response is expected in that case.
+      \return true if successfully registered (i.e. the command was sent;
+      does not guarantee server-side acceptance).
+    */
+    bool doStopBall();
 
     /*!
       \brief register dash command
