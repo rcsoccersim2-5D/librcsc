@@ -370,6 +370,7 @@ constexpr double ROLL_STOP_SPEED = 0.05;
 
 constexpr double HEIGHT_POWER_COST = 0.25;
 constexpr bool PRECISE_BOUNCE_TIMING = true;
+constexpr double TACKLE_HEIGHT = 0.5;
 
 }
 
@@ -713,6 +714,7 @@ ServerParam::setDefaultParam()
     M_roll_stop_speed = ROLL_STOP_SPEED;
     M_height_power_cost = HEIGHT_POWER_COST;
     M_precise_bounce_timing = PRECISE_BOUNCE_TIMING;
+    M_tackle_height = TACKLE_HEIGHT;
 
     setAdditionalParam();
 }
@@ -1035,6 +1037,7 @@ ServerParam::createMap()
         ( "roll_stop_speed", "", &M_roll_stop_speed )
         ( "height_power_cost", "", &M_height_power_cost )
         ( "precise_bounce_timing", "", &M_precise_bounce_timing )
+        ( "tackle_height", "", &M_tackle_height )
         // XXX
         //( "random_seed", "", &M_random_seed )
         ;

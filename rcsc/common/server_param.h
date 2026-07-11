@@ -667,6 +667,7 @@ private:
     double M_roll_stop_speed;
     double M_height_power_cost;
     bool M_precise_bounce_timing;
+    double M_tackle_height;
 
     //--------------------------------------------------------
     // additional params
@@ -1165,6 +1166,7 @@ public:
     double rollStopSpeed() const { return M_roll_stop_speed; }
     double heightPowerCost() const { return M_height_power_cost; }
     bool preciseBounceTiming() const { return M_precise_bounce_timing; }
+    double tackleHeight() const { return M_tackle_height; }
 
 
     // automatically defined values

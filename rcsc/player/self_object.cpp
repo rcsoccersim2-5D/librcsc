@@ -1087,6 +1087,19 @@ SelfObject::updateBallInfo( const BallObject & ball )
     //
     // tackle/foul probability
     //
+    if ( ! SP.is2dMode()
+         && ball.posZ() > SP.tackleHeight() )
+    {
+        // v20 -- 3D ball-flight extension: ball is too high off the ground
+        // to be tackled/fouled.
+        M_tackle_probability = 0.0;
+        M_foul_probability = 0.0;
+
+        dlog.addText( Logger::WORLD,
+                      __FILE__" (updateBallInfo) tackle/foul disabled: ball posZ=%.3f > tackle_height=%.3f",
+                      ball.posZ(), SP.tackleHeight() );
+    }
+    else
     {
         const Vector2D player2ball = ( ball.pos() - pos() ).rotatedVector( - body() );
 
@@ -1134,6 +1147,8 @@ SelfObject::updateBallInfo( const BallObject & ball )
                       __FILE__" (updateBallInfo) tackle_prob=%.3f foul_prob=%.3f",
                       M_tackle_probability, M_foul_probability );
     }
+}
+
 }
 
 /*-------------------------------------------------------------------*/
