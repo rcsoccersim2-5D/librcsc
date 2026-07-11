@@ -257,13 +257,13 @@ public:
                   const double & loft = 0.0 );
 
     /*!
-      \brief v20 3D extension: create stop_ball command.
+      \brief v20 3D extension: create chest_trap command.
 
       deadens the ball's velocity while it is kickable. Occupies the same
       body-command slot as kick/dash/turn/move/catch/tackle -- mutually
       exclusive with those commands in a single cycle.
     */
-    void setStopBall();
+    void setChestTrap();
 
     /*!
       \brief create dash command and its effect with dash parameter

@@ -63,7 +63,7 @@ public:
         KICK,
         CATCH,
         TACKLE,
-        STOP_BALL, //!< v20 3D extension: deaden ball velocity while kickable
+        CHEST_TRAP, //!< v20 3D extension: deaden ball velocity while kickable
         // support commands
         TURN_NECK,
         CHANGE_VIEW,
@@ -798,22 +798,22 @@ public:
 
 //////////////////////////////////////////////////////////////////////
 /*!
-  \class PlayerStopBallCommand
+  \class PlayerChestTrapCommand
   \brief v20 3D extension: deaden the ball's velocity while it is kickable
 
   <pre>
   Format:
-  <- (stop_ball)
+  <- (chest_trap)
   </pre>
 
-  Mirrors rcssserver's new (stop_ball) command (Player::stop_ball() /
-  Stadium::stopBall()): silently rejected server-side (no error response)
+  Mirrors rcssserver's new (chest_trap) command (Player::chest_trap() /
+  Stadium::chestTrap()): silently rejected server-side (no error response)
   when 2d_mode==true or the ball is not currently kickable, same as the
   existing silent-reject pattern used by (move). Occupies the same
   per-cycle body-command slot as kick/dash/turn/move/catch/tackle -- it is
   mutually exclusive with those in a single cycle.
 */
-class PlayerStopBallCommand
+class PlayerChestTrapCommand
     : public PlayerBodyCommand {
 private:
 
@@ -821,7 +821,7 @@ public:
     /*!
       \brief constructor. nothing to do
     */
-    PlayerStopBallCommand()
+    PlayerChestTrapCommand()
       { }
 
     /*!
@@ -830,7 +830,7 @@ public:
     */
     Type type() const
       {
-          return STOP_BALL;
+          return CHEST_TRAP;
       }
 
     /*!
@@ -846,7 +846,7 @@ public:
     */
     std::string name() const
       {
-          return std::string( "stop_ball" );
+          return std::string( "chest_trap" );
       }
 };
 

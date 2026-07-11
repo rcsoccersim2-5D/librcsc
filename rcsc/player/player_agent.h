@@ -217,14 +217,14 @@ public:
                  const double & loft = 0.0 );
 
     /*!
-      \brief v20 3D extension: register stop_ball command. deadens the
+      \brief v20 3D extension: register chest_trap command. deadens the
       ball's velocity while it is kickable. Silently rejected server-side
       (like doMove()'s target) when 2d_mode==true or the ball is not
       currently kickable -- no error response is expected in that case.
       \return true if successfully registered (i.e. the command was sent;
       does not guarantee server-side acceptance).
     */
-    bool doStopBall();
+    bool doChestTrap();
 
     /*!
       \brief register dash command

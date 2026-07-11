@@ -2797,22 +2797,22 @@ PlayerAgent::doKick( const double & power,
 
 */
 bool
-PlayerAgent::doStopBall()
+PlayerAgent::doChestTrap()
 {
     if ( ! world().self().isKickable() )
     {
         dlog.addText( Logger::ACTION,
-                      __FILE__" (doStopBall) but not kickable" );
+                      __FILE__" (doChestTrap) but not kickable" );
         std::cerr << world().teamName() << ' '
                   << world().self().unum() << ": "
                   << world().time()
-                  << " doStopBall(). but not kickable" << std::endl;
+                  << " doChestTrap(). but not kickable" << std::endl;
         return false;
     }
     if ( world().self().isFrozen() )
     {
         dlog.addText( Logger::ACTION,
-                      __FILE__" (doStopBall) but in tackle expire period  %d",
+                      __FILE__" (doChestTrap) but in tackle expire period  %d",
                       world().self().tackleExpires() );
         std::cerr << world().teamName() << ' '
                   << world().self().unum() << ": "
@@ -2821,7 +2821,7 @@ PlayerAgent::doStopBall()
         return false;
     }
 
-    M_effector.setStopBall();
+    M_effector.setChestTrap();
     return true;
 }
 

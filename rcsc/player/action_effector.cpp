@@ -1270,10 +1270,10 @@ ActionEffector::setMove( const double & x,
 
 */
 void
-ActionEffector::setStopBall()
+ActionEffector::setChestTrap()
 {
     dlog.addText( Logger::ACTION,
-                  __FILE__" (setStopBall) register stop_ball" );
+                  __FILE__" (setChestTrap) register chest_trap" );
 
     //////////////////////////////////////////////////
     // create command object
@@ -1282,7 +1282,7 @@ ActionEffector::setStopBall()
         delete M_command_body;
         M_command_body = nullptr;
     }
-    M_command_body = new PlayerStopBallCommand();
+    M_command_body = new PlayerChestTrapCommand();
 }
 
 /*-------------------------------------------------------------------*/

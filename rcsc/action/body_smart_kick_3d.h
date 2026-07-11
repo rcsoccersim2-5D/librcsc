@@ -59,7 +59,7 @@ namespace rcsc {
   and it deliberately does NOT fall back to Body_StopBall()/Body_HoldBall2008()
   on failure (unlike Body_KickOneStep), because both of those existing helpers
   assume a grounded ball. Trapping an airborne ball is handled by the new
-  doStopBall() command (Step 6) / helios-base's Body_TrapBall3D (Step 8), not
+  doChestTrap() command (Step 6) / helios-base's Body_TrapBall3D (Step 8), not
   by this class.
 */
 class Body_SmartKick3D

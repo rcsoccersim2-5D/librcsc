@@ -198,9 +198,9 @@ PlayerKickCommand::toCommandString( std::ostream & to ) const
 
 */
 std::ostream &
-PlayerStopBallCommand::toCommandString( std::ostream & to ) const
+PlayerChestTrapCommand::toCommandString( std::ostream & to ) const
 {
-    return to << "(stop_ball)";
+    return to << "(chest_trap)";
 }
 
 /*-------------------------------------------------------------------*/
