@@ -83,13 +83,23 @@ InterceptSimulatorSelf3D::simulate( const WorldModel & wm,
     //
     // verified by hand to match the discrete recurrence step-by-step for
     // t=1,2 (see Step 5 verification notes).
+    // Horizontal motion: as of the 2026-07-10 physics rework the ball has
+    // ZERO horizontal friction while airborne (ground-only ball_decay
+    // friction, applied only once pos_z<=0 -- see rcssserver's Ball::incZ()/
+    // applyBounceEnergyLoss()). Every t evaluated in this loop is still in
+    // the airborne phase (the loop returns as soon as z_t first drops to/
+    // below player_height), so the correct ground-plane projection here is
+    // constant-velocity (ball.pos() + ball.vel()*t), NOT the decaying
+    // ball.inertiaPoint( t ) helper (that helper assumes ball_decay ground
+    // friction and would under-estimate how far an airborne ball travels).
     for ( int t = 1; t <= max_step; ++t )
     {
         const double z_t = z0 + t*vz0 - 0.5*g*t*(t+1);
 
         if ( z_t <= player_height )
         {
-            result = Intercept3D( t, Vector3D( ball.inertiaPoint( t ), z_t ) );
+            const Vector2D pos_t = ball.pos() + ball.vel() * t;
+            result = Intercept3D( t, Vector3D( pos_t, z_t ) );
             return true;
         }
     }

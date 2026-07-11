@@ -662,9 +662,7 @@ private:
     double M_goal_height;
     double M_gravity;
     double M_ball_bounce_restitution;
-    double M_ball_bounce_friction;
-    double M_loft_power_cost;
-    double M_air_decay;
+
     double M_bounce_stop_speed;
     double M_roll_stop_speed;
     double M_height_power_cost;
@@ -1163,9 +1161,6 @@ public:
     double goalHeight() const { return M_goal_height; }
     double gravity() const { return M_gravity; }
     double ballBounceRestitution() const { return M_ball_bounce_restitution; }
-    double ballBounceFriction() const { return M_ball_bounce_friction; }
-    double loftPowerCost() const { return M_loft_power_cost; }
-    double airDecay() const { return M_air_decay; }
     double bounceStopSpeed() const { return M_bounce_stop_speed; }
     double rollStopSpeed() const { return M_roll_stop_speed; }
     double heightPowerCost() const { return M_height_power_cost; }

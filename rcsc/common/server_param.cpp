@@ -363,13 +363,11 @@ constexpr double LAND_FOCUS_DIST_NOISE_RATE = 0.00125;
 constexpr bool TWO_D_MODE = true;
 constexpr double PLAYER_HEIGHT = 2.0;
 constexpr double GOAL_HEIGHT = 2.0;
-constexpr double GRAVITY = 0.15;
+constexpr double GRAVITY = 0.1;
 constexpr double BALL_BOUNCE_RESTITUTION = 0.5;
-constexpr double BALL_BOUNCE_FRICTION = 0.5;
-constexpr double LOFT_POWER_COST = 0.4;
-constexpr double AIR_DECAY = 0.999;
 constexpr double BOUNCE_STOP_SPEED = 0.05;
 constexpr double ROLL_STOP_SPEED = 0.05;
+
 constexpr double HEIGHT_POWER_COST = 0.25;
 constexpr bool PRECISE_BOUNCE_TIMING = true;
 
@@ -711,9 +709,6 @@ ServerParam::setDefaultParam()
     M_goal_height = GOAL_HEIGHT;
     M_gravity = GRAVITY;
     M_ball_bounce_restitution = BALL_BOUNCE_RESTITUTION;
-    M_ball_bounce_friction = BALL_BOUNCE_FRICTION;
-    M_loft_power_cost = LOFT_POWER_COST;
-    M_air_decay = AIR_DECAY;
     M_bounce_stop_speed = BOUNCE_STOP_SPEED;
     M_roll_stop_speed = ROLL_STOP_SPEED;
     M_height_power_cost = HEIGHT_POWER_COST;
@@ -1036,9 +1031,6 @@ ServerParam::createMap()
         ( "goal_height", "", &M_goal_height )
         ( "gravity", "", &M_gravity )
         ( "ball_bounce_restitution", "", &M_ball_bounce_restitution )
-        ( "ball_bounce_friction", "", &M_ball_bounce_friction )
-        ( "loft_power_cost", "", &M_loft_power_cost )
-        ( "air_decay", "", &M_air_decay )
         ( "bounce_stop_speed", "", &M_bounce_stop_speed )
         ( "roll_stop_speed", "", &M_roll_stop_speed )
         ( "height_power_cost", "", &M_height_power_cost )
