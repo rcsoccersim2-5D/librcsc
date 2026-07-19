@@ -32,6 +32,7 @@
 #ifndef RCSC_PLAYER_INTERCEPT_SIMULATOR_SELF_3D_H
 #define RCSC_PLAYER_INTERCEPT_SIMULATOR_SELF_3D_H
 
+#include <rcsc/player/ball_trajectory.h>
 #include <rcsc/geom/vector_3d.h>
 
 namespace rcsc {
@@ -42,14 +43,10 @@ class WorldModel;
   \struct Intercept3D
   \brief lightweight result of the 3D self intercept simulation.
 
-  This is intentionally NOT the same type as rcsc::Intercept (intercept.h):
-  it only carries the information this standalone 3D simulator can produce
-  (the cycle at which the ball's height first becomes reachable, and the
-  ball's estimated 3D position -- ground-plane inertia point plus height --
-  at that cycle). It says nothing about dash/turn feasibility, unlike the
-  2D rcsc::Intercept produced by InterceptSimulatorSelfV17.
+  Deprecated compatibility result for the old standalone API.  Normal
+  interception uses rcsc::Intercept and InterceptSimulatorSelfV17.
 */
-struct Intercept3D {
+struct [[deprecated("use BallTrajectory3D and Intercept")]] Intercept3D {
     int cycle_; //!< cycle at which the ball height is estimated to become <= player_height (reachable)
     Vector3D pos_; //!< estimated ball 3D position at cycle_
 
@@ -67,25 +64,14 @@ struct Intercept3D {
 
 /*!
   \class InterceptSimulatorSelf3D
-  \brief standalone, closed-form 3D ball-height reachability predictor.
+  \brief deprecated adapter over the shared 3D ball trajectory.
 
   This class deliberately does NOT implement the InterceptSimulatorSelf
-  interface used by InterceptSimulatorSelfV17/V13/V7 -- it is not registered
-  with InterceptTable::setSimulator() and does not produce rcsc::Intercept
-  values. It answers a narrower question those simulators cannot: given the
-  ball's current 3D belief (BallObject::pos3D()/velZ()) and
-  ServerParam::gravity(), on which upcoming cycle does the ball's height
-  first drop to (or already sit at/below) ServerParam::playerHeight(), i.e.
-  the cycle from which the ball becomes vertically reachable again.
-
-  When ServerParam::is2dMode() is true the ball's height is always 0, so
-  this always resolves as already-reachable at cycle 0 -- callers do not
-  need to special-case 2D-mode servers.
-
-  Intended callers: helios-base decision code (e.g. a lofted-pass
-  generator) or a convenience WorldModel wrapper -- NOT InterceptTable.
+  interface.  It remains for source compatibility and delegates all state
+  propagation to BallTrajectory3D, so it no longer owns a second vertical
+  equation.
 */
-class InterceptSimulatorSelf3D {
+class [[deprecated("use InterceptSimulatorSelfV17")]] InterceptSimulatorSelf3D {
 public:
 
     InterceptSimulatorSelf3D() = default;

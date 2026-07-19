@@ -330,6 +330,7 @@ WorldModel::WorldModel()
       M_valid( true ),
       M_self(),
       M_ball(),
+      M_ball_trajectory(),
       M_our_goalie_unum( Unum_Unknown ),
       M_their_goalie_unum( Unum_Unknown ),
       M_offside_line_x( 0.0 ),
@@ -2005,6 +2006,9 @@ WorldModel::updateJustBeforeDecision( const ActionEffector & act,
     M_ball.updateByGameMode( gameMode() );
 
     M_ball.updateSelfRelated( self(), prevBall() );
+    // Freeze one trajectory for all intercept and action consumers in this
+    // decision cycle after the final ball update.
+    M_ball_trajectory.update( M_ball );
     M_self.updateBallInfo( ball() );
 
     updatePlayerStateCache();
@@ -4182,8 +4186,11 @@ WorldModel::estimateMaybeKickableTeammate()
     s_update_time = this->time();
 
     M_maybe_kickable_teammate = nullptr;
+    const bool ball_height_controlled
+        = M_ball_trajectory.canControlAt( 0,
+                                          ServerParam::i().playerHeight() );
 
-    if ( this->kickableTeammate() )
+    if ( ball_height_controlled && this->kickableTeammate() )
     {
         dlog.addText( Logger::WORLD,
                       __FILE__":(estimateMaybeKickableTeammate) exist normal" );
@@ -4212,7 +4219,8 @@ WorldModel::estimateMaybeKickableTeammate()
             return;
         }
 
-        if ( t->distFromBall() < ( t->playerTypePtr()->kickableArea()
+        if ( ball_height_controlled
+             && t->distFromBall() < ( t->playerTypePtr()->kickableArea()
                                    + t->distFromSelf() * 0.05
                                    + this->ball().distFromSelf() * 0.05 ) )
         {
@@ -4239,6 +4247,10 @@ WorldModel::estimateMaybeKickableTeammate()
 void
 WorldModel::updateKickablePlayers()
 {
+    const bool ball_height_controlled
+        = M_ball_trajectory.canControlAt( 0,
+                                          ServerParam::i().playerHeight() );
+
     //
     // estimate teammate kickable state
     //
@@ -4251,7 +4263,8 @@ WorldModel::updateKickablePlayers()
             continue;
         }
 
-        if ( p->isKickable( 0.0 ) )
+        if ( ball_height_controlled
+             && p->isKickable( 0.0 ) )
         {
             M_kickable_teammate = p;
             dlog.addText( Logger::WORLD,
@@ -4285,7 +4298,8 @@ WorldModel::updateKickablePlayers()
             buf = std::min( 1.0,
                             p->distFromSelf() * 0.05 + ball().distFromSelf() * 0.05 );
 
-            if ( p->isKickable( -buf ) )
+            if ( ball_height_controlled
+                 && p->isKickable( -buf ) )
             {
                 M_maybe_kickable_opponent = p;
                 dlog.addText( Logger::WORLD,
@@ -4297,7 +4311,8 @@ WorldModel::updateKickablePlayers()
         buf = std::min( 0.5,
                         p->distFromSelf() * 0.02 + ball().distFromSelf() * 0.02 );
 
-        if ( p->isKickable( -buf ) )
+        if ( ball_height_controlled
+             && p->isKickable( -buf ) )
         {
             M_kickable_opponent = p;
             dlog.addText( Logger::WORLD,

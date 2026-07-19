@@ -48,68 +48,26 @@ InterceptSimulatorSelf3D::simulate( const WorldModel & wm,
                                      const int max_step,
                                      Intercept3D & result ) const
 {
-    const ServerParam & SP = ServerParam::i();
     const BallObject & ball = wm.ball();
+    const BallTrajectory3D trajectory( ball );
 
-    // In 2D mode the ball height is always 0, so it is trivially reachable
-    // right now -- callers do not need to special-case 2D-mode servers.
-    if ( SP.is2dMode() )
+    if ( trajectory.canControlAt( 0, ServerParam::i().playerHeight() ) )
     {
-        result = Intercept3D( 0, ball.pos3D() );
-        return true;
+        BallTrajectory3D::State state;
+        if ( trajectory.stateAt( 0, state ) )
+        {
+            result = Intercept3D( 0, state.pos );
+            return true;
+        }
     }
 
-    if ( ! ball.posZValid() )
-    {
-        return false;
-    }
-
-    const double z0 = ball.posZ();
-    const double vz0 = ball.velZ();
-    const double g = SP.gravity();
-    const double player_height = SP.playerHeight();
-
-    // already reachable this cycle
-    if ( z0 <= player_height )
-    {
-        result = Intercept3D( 0, ball.pos3D() );
-        return true;
-    }
-
-    if ( ! ball.velZValid() )
-    {
-        return false;
-    }
-
-    // Closed-form evaluation of rcssserver's discrete semi-implicit-Euler
-    // recurrence used by Ball::incZ() (vel_z -= gravity; pos_z += vel_z,
-    // applied once per cycle, ignoring bounce/goal/catch special cases,
-    // which do not apply while the ball is still above player_height and
-    // in flight):
-    //
-    //   vz(t) = vz0 - t*g
-    //   z(t)  = z0 + sum_{k=1}^{t} vz(k)
-    //         = z0 + t*vz0 - g * t*(t+1)/2
-    //
-    // verified by hand to match the discrete recurrence step-by-step for
-    // t=1,2 (see Step 5 verification notes).
-    // Horizontal motion: as of the 2026-07-10 physics rework the ball has
-    // ZERO horizontal friction while airborne (ground-only ball_decay
-    // friction, applied only once pos_z<=0 -- see rcssserver's Ball::incZ()/
-    // applyBounceEnergyLoss()). Every t evaluated in this loop is still in
-    // the airborne phase (the loop returns as soon as z_t first drops to/
-    // below player_height), so the correct ground-plane projection here is
-    // constant-velocity (ball.pos() + ball.vel()*t), NOT the decaying
-    // ball.inertiaPoint( t ) helper (that helper assumes ball_decay ground
-    // friction and would under-estimate how far an airborne ball travels).
     for ( int t = 1; t <= max_step; ++t )
     {
-        const double z_t = z0 + t*vz0 - 0.5*g*t*(t+1);
-
-        if ( z_t <= player_height )
+        BallTrajectory3D::State state;
+        if ( ! trajectory.stateAt( t, state ) ) return false;
+        if ( trajectory.canControlAt( t, ServerParam::i().playerHeight() ) )
         {
-            const Vector2D pos_t = ball.pos() + ball.vel() * t;
-            result = Intercept3D( t, Vector3D( pos_t, z_t ) );
+            result = Intercept3D( t, state.pos );
             return true;
         }
     }

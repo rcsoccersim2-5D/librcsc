@@ -7,6 +7,7 @@ librcsc_player_la_SOURCES = \
 	action_effector.cpp \
 	audio_sensor.cpp \
 	ball_object.cpp \
+	ball_trajectory.cpp \
 	body_sensor.cpp \
 	debug_client.cpp \
 	fullstate_sensor.cpp \
@@ -39,6 +40,7 @@ librcsc_playerinclude_HEADERS = \
 	action_effector.h \
 	audio_sensor.h \
 	ball_object.h \
+	ball_trajectory.h \
 	body_sensor.h \
 	debug_client.h \
 	free_message.h \

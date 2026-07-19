@@ -303,6 +303,9 @@ public:
     */
     Vector3D pos3D() const { return Vector3D( pos(), M_pos_z ); }
 
+    //! v20: get the estimated 3D velocity (ground-plane vel() + velZ()).
+    Vector3D vel3D() const { return Vector3D( vel(), M_vel_z ); }
+
     /*!
       \brief v20. check whether the ball is believed to be on the ground.
       Unknown or stale z is treated conservatively as grounded.  A fresh

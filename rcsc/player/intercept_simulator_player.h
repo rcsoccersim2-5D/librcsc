@@ -33,6 +33,7 @@
 #define RCSC_PLAYER_INTERCEPT_SIMULATOR_PLAYER_H
 
 #include <rcsc/geom/vector_2d.h>
+#include <rcsc/player/ball_trajectory.h>
 #include <vector>
 
 namespace rcsc {
@@ -85,6 +86,12 @@ private:
 
     //! predicted ball positions
     std::vector< Vector2D > M_ball_cache;
+    //! corresponding vertical/status samples from the shared trajectory
+    std::vector< BallTrajectory3D::State > M_ball_state_cache;
+    //! whether the corresponding ball sample is controllable at player height
+    std::vector< bool > M_ball_control_cache;
+    //! server-compatible trajectory used to build the samples
+    BallTrajectory3D M_ball_trajectory;
     //! ball velocity angle
     const AngleDeg M_ball_move_angle;
 
@@ -98,8 +105,12 @@ public:
       \param ball_pos initial ball position
       \param ball_vel initial ball velocity
     */
+    [[deprecated( "use the trajectory-aware constructor" )]]
     InterceptSimulatorPlayer( const Vector2D & ball_pos,
                               const Vector2D & ball_vel );
+
+    /*!\brief construct from the decision-cycle shared trajectory. */
+    explicit InterceptSimulatorPlayer( const BallTrajectory3D & trajectory );
 
     /*!
       \brief destructor. nothing to do
@@ -123,12 +134,9 @@ public:
 private:
 
     /*!
-      \brief create predicted ball positions
-      \param ball_pos initial ball position
-      \param ball_vel initial ball velocity
+      \brief create predicted ball positions and height eligibility
      */
-    void createBallCache( const Vector2D & ball_pos,
-                          const Vector2D & ball_vel );
+    void createBallCache();
 
     /*!
       \brief estimate minimum reach step (very rough calculation)
