@@ -26,7 +26,7 @@ librcsc lets a C++ program become a RoboCup 2D soccer agent (player, online coac
 - **CMake**: `cmake . && make` (dual support, same module layout).
 - **Packaging**: `librcsc.pc.in` (pkg-config), `librcsc.spec.in` (RPM), `librcsc-config.in`/`librcscenv.in` (legacy discovery scripts) — `helios-base` and other consumer teams discover librcsc via these.
 - **Docs**: `Doxyfile.in` generates API docs from source comments — a useful secondary reference alongside these instructions.
-- No automated unit-test suite found; validate changes by building the library and the standalone CLI tools, and (when touching agent-facing code) building `helios-base` against the local library.
+- Focused CppUnit coverage is available for the v20 ball-observation parser when configured with `--enable-unit-test`; validate changes by building the library and standalone CLI tools, running that test, and (when touching agent-facing code) building `helios-base` against the local library.
 
 ## Conventions
 - **Singletons for cross-cutting config**: `ServerParam::instance()`, `KickTable::instance()` — populated once, shared process-wide; do not add per-agent copies.

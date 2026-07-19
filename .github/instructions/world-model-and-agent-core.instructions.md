@@ -26,6 +26,18 @@ applyTo: 'rcsc/player/**'
 2. `WorldModel::update(act, current)` (world_model.cpp:731) — internal per-cycle bookkeeping: saves `M_prev_ball`, advances `M_self`/`M_ball` via dead-reckoning (`M_self.update()`, `M_ball.update()`), decays player object confidence (`p.update()` on every `PlayerObject` in `M_teammates`/`M_opponents`/`M_unknown_players`, pruning invalid ones), clears per-cycle caches (`M_teammates_from_self`, `M_all_players`, kickable pointers), rotates the `ViewArea` ring buffer. Called from inside `updateAfterSenseBody`, or standalone if no sense_body arrived.
 3. `PlayerAgent::action()` (:2361) — the decision-time fusion & dispatch, detailed below.
 
+**v20 ball observation contract**: `VisualSensor` is version-aware and preserves the
+wire fields without reconstructing or denoising vertical state. For v20, low quality is
+`dir z`; high quality without planar changes is `dist dir z`; high quality with changes
+is `dist dir dist_chg dir_chg z vz`. The `BallT` presence flags distinguish missing
+distance and missing vertical velocity from an observed numeric zero. Protocols v1-v19
+retain their historical layouts and legacy low-quality handling. `WorldModel::localizeBall`
+commits raw z/vz before planar localization, so low-quality observations can refresh z
+without inventing x/y. Fullstate v20 carries x/y/z/vx/vy/vz; legacy four-value fullstate
+does not mark z/vz fresh. `BallObject::posZValid()`/`velZValid()` expose the same
+confidence-counter semantics as planar state, and consumers treat unavailable/stale z
+conservatively. v20 `2d_mode=true` uses the same shapes with zero z/vz.
+
 **`updateJustBeforeDecision()` fusion pipeline** (world_model.cpp:1976-2039), called once per cycle right before `actionImpl()`:
 ```
 update(act, current)                 // if not already updated this cycle

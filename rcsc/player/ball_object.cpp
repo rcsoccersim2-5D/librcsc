@@ -265,6 +265,8 @@ BallObject::update( const ActionEffector & act,
     M_vel_count = std::min( 1000, M_vel_count + 1 );
     M_seen_vel_count = std::min( 1000, M_seen_vel_count + 1 );
     M_heard_vel_count = std::min( 1000, M_heard_vel_count + 1 );
+    M_pos_z_count = std::min( 1000, M_pos_z_count + 1 );
+    M_vel_z_count = std::min( 1000, M_vel_z_count + 1 );
     M_lost_count = std::min( 1000, M_lost_count + 1 );
 
     // M_ghost_count = 0;

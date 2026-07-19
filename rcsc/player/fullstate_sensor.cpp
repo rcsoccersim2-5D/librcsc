@@ -94,10 +94,14 @@ FullstateSensor::parse( const char * msg,
 
     M_our_players.clear();
     M_their_players.clear();
+    M_ball.has_pos_z_ = false;
+    M_ball.has_vel_z_ = false;
+    M_ball.pos_z_ = 0.0;
+    M_ball.vel_z_ = 0.0;
 
     if ( version >= 8.0 )
     {
-        parseV8( msg, our_side );
+        parseV8( msg, our_side, version );
     }
     else
     {
@@ -141,7 +145,8 @@ FullstateSensor::reverseSide()
 */
 void
 FullstateSensor::parseV8( const char * msg,
-                          const SideID our_side )
+                          const SideID our_side,
+                          const double version )
 {
     /*
       fullstate v8+ format:
@@ -265,17 +270,21 @@ FullstateSensor::parseV8( const char * msg,
             p = pend;
         }
 
-        if ( remaining >= 4 )
+        const bool has_vertical = ( version >= 20.0 && remaining == 4 );
+
+        if ( has_vertical )
         {
             M_ball.pos_z_ = std::strtod( msg, &next ); msg = next;
+            M_ball.has_pos_z_ = true;
         }
 
         M_ball.vel_.x = std::strtod( msg, &next ); msg = next;
         M_ball.vel_.y = std::strtod( msg, &next ); msg = next;
 
-        if ( remaining >= 4 )
+        if ( has_vertical )
         {
             M_ball.vel_z_ = std::strtod( msg, &next ); msg = next;
+            M_ball.has_vel_z_ = true;
         }
     }
 

@@ -153,6 +153,7 @@ Body_TackleToPoint::execute( PlayerAgent * agent )
     // be tackled. Belt-and-suspenders check mirroring the height gate
     // already applied to SelfObject::tackleProbability().
     if ( ! sp.is2dMode()
+         && wm.ball().posZValid()
          && wm.ball().posZ() > sp.tackleHeight() )
     {
         return false;

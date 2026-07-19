@@ -83,7 +83,12 @@ operator<<( std::ostream & os,
        << " dist=" << data.dist_
        << " dir=" << data.dir_
        << " dist_chng=" << data.dist_chng_
-       << " dir_chng=" << data.dir_chng_;
+       << " dir_chng=" << data.dir_chng_
+       << " has_dist=" << data.has_dist_
+       << " has_pos_z=" << data.has_pos_z_
+       << " pos_z=" << data.pos_z_
+       << " has_vel_z=" << data.has_vel_z_
+       << " vel_z=" << data.vel_z_;
 
     return os;
 }
@@ -160,7 +165,6 @@ operator<<( std::ostream & os,
 
 const double VisualSensor::DIST_ERR = std::numeric_limits< double >::max();
 const double VisualSensor::DIR_ERR = -360;
-const double VisualSensor::ELEVATION_ERR = std::numeric_limits< double >::max();
 
 /*-------------------------------------------------------------------*/
 /*!
@@ -420,7 +424,7 @@ VisualSensor::parse( const char * msg,
         // ball
         else if ( object_type == Obj_Ball )
         {
-            if ( parseBall( msg, &seen_ball ) )
+            if ( parseBall( msg, version, &seen_ball ) )
             {
                 M_balls.push_back( seen_ball );
             }
@@ -706,113 +710,102 @@ VisualSensor::parseLine( const char * tok,
 */
 bool
 VisualSensor::parseBall( const char * tok,
+                         const double version,
                          BallT * info )
 {
-    // skip all object name
-    while ( *tok != ')' ) ++tok;
-    tok += 2; // skip space & paren
+    info->reset();
 
-    char *next;
+    // Skip the complete object name, e.g. "((b)" or "((B)".
+    while ( *tok != '\0' && *tok != ')' ) ++tok;
+    if ( *tok != ')' ) return false;
+    ++tok;
+    while ( *tok == ' ' ) ++tok;
 
-    // read dist
-    info->dist_ = std::strtod( tok, &next );
-    if ( info->dist_ == -HUGE_VAL
-         || info->dist_ == HUGE_VAL )
+    std::vector< double > values;
+    while ( *tok != '\0' && *tok != ')' )
     {
-        std::cerr << "VisualSensor::parseBall: distance read error.["
-                  << std::string( tok, 16 ) << "]"
-                  << std::endl;
-        return false;
-    }
-    tok = next;
-
-    // check view quality
-    if ( *tok == ')' )
-    {
-        //std::cerr << "VisualSensor:: parseBall: view quality is LOW ??\n";
-        return false;
-    }
-
-    // read dir
-    info->dir_ = std::strtod( tok, &next );
-    if ( info->dir_ == -HUGE_VAL
-         || info->dir_ == HUGE_VAL )
-    {
-        std::cerr << "VisualSensor::parseBall: dir read error. ["
-                  << std::string( tok, 16 ) << "]"
-                  << std::endl;
-        return false;
-    }
-    tok = next;
-
-    // read velocity info (dist_chg -> dir_chg) and the v20 trailing
-    // elevation token. There are 4 possible trailing shapes:
-    //   0 remaining numbers: "(name dist dir)"                       (pre-v20, no vel)
-    //   1 remaining number:  "(name dist dir elevation)"             (v20, no vel)
-    //   2 remaining numbers: "(name dist dir dist_chg dir_chg)"      (pre-v20, with vel)
-    //   3 remaining numbers: "(name dist dir dist_chg dir_chg elevation)" (v20, with vel)
-    // A simple "read-2-if-not-')'" heuristic cannot disambiguate the
-    // 1-remaining (elevation-only) case from the 2-remaining (vel-only)
-    // case, so count the remaining numeric tokens before the closing
-    // ')' first.
-    int remaining = 0;
-    {
-        const char * p = tok;
-        while ( *p != '\0' && *p != ')' )
+        char * next = nullptr;
+        const double value = std::strtod( tok, &next );
+        if ( next == tok || ! std::isfinite( value ) )
         {
-            while ( *p == ' ' ) ++p;
-            if ( *p == ')' || *p == '\0' ) break;
-            char * pend;
-            std::strtod( p, &pend );
-            if ( pend == p ) break; // not a number, bail defensively
-            ++remaining;
-            p = pend;
-        }
-    }
-
-    if ( remaining >= 2 )
-    {
-        info->dist_chng_ = std::strtod( tok, &next );
-        tok = next;
-        info->dir_chng_ = std::strtod( tok, &next );
-        tok = next;
-        info->has_vel_ = true;
-        if ( info->dist_chng_ == -HUGE_VAL
-             || info->dist_chng_ == HUGE_VAL
-             || info->dir_chng_ == -HUGE_VAL
-             || info->dir_chng_ == HUGE_VAL )
-        {
-            std::cerr << "VisualSensor:: parseBall. chng read error.["
-                      << std::string( tok, 16 ) << "]"
+            std::cerr << "VisualSensor::parseBall: malformed numeric payload"
                       << std::endl;
-            info->dist_chng_ = 0.0;
-            info->dir_chng_ = 0.0;
-            info->has_vel_ = false;
             return false;
         }
-        remaining -= 2;
+        values.push_back( value );
+        tok = next;
+        while ( *tok == ' ' ) ++tok;
     }
 
-    // v20: optional trailing elevation token. Absent on pre-v20 servers
-    // and on v20+ servers running 2d_mode=true -- in both cases
-    // info->elevation_ simply stays at its constructed ELEVATION_ERR
-    // sentinel and every existing dist_/dir_/has_vel_ code path above is
-    // completely unaffected.
-    if ( remaining >= 1 )
+    if ( *tok != ')' )
     {
-        info->elevation_ = std::strtod( tok, &next );
-        if ( info->elevation_ == -HUGE_VAL
-             || info->elevation_ == HUGE_VAL )
-        {
-            info->elevation_ = VisualSensor::ELEVATION_ERR;
-        }
-        else
-        {
-            tok = next;
-        }
+        std::cerr << "VisualSensor::parseBall: unterminated payload"
+                  << std::endl;
+        return false;
     }
 
-    return true;
+    const std::size_t count = values.size();
+    if ( version < 20.0 )
+    {
+        if ( count == 1 )
+        {
+            // Preserve the historical behavior: legacy low-quality ball
+            // observations are not retained in M_balls.
+            return false;
+        }
+        if ( count != 2 && count != 4 )
+        {
+            std::cerr << "VisualSensor::parseBall: unexpected legacy field count "
+                      << count << std::endl;
+            return false;
+        }
+
+        info->dist_ = values[0];
+        info->dir_ = values[1];
+        info->has_dist_ = true;
+        if ( count == 4 )
+        {
+            info->dist_chng_ = values[2];
+            info->dir_chng_ = values[3];
+            info->has_vel_ = true;
+        }
+        return true;
+    }
+
+    if ( count == 2 )
+    {
+        info->dir_ = values[0];
+        info->pos_z_ = values[1];
+        info->has_pos_z_ = true;
+        return true;
+    }
+    if ( count == 3 )
+    {
+        info->dist_ = values[0];
+        info->dir_ = values[1];
+        info->pos_z_ = values[2];
+        info->has_dist_ = true;
+        info->has_pos_z_ = true;
+        return true;
+    }
+    if ( count == 6 )
+    {
+        info->dist_ = values[0];
+        info->dir_ = values[1];
+        info->dist_chng_ = values[2];
+        info->dir_chng_ = values[3];
+        info->pos_z_ = values[4];
+        info->vel_z_ = values[5];
+        info->has_dist_ = true;
+        info->has_vel_ = true;
+        info->has_pos_z_ = true;
+        info->has_vel_z_ = true;
+        return true;
+    }
+
+    std::cerr << "VisualSensor::parseBall: unexpected v20 field count "
+              << count << std::endl;
+    return false;
 }
 
 

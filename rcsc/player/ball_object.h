@@ -99,12 +99,7 @@ private:
     int M_ghost_count; //!< ghost flag
 
     // v20: 3D ball extension. z/vel_z belief mirrors the existing pos/vel
-    // confidence-counter convention above (do NOT invent a different
-    // staleness model). On a 2d_mode=true (or pre-v20) server, neither
-    // member is ever committed, so M_pos_z/M_vel_z simply stay at their
-    // constructed defaults (0.0) and M_pos_z_count/M_vel_z_count stay
-    // at the "long stale" sentinel, exactly like the other *_count
-    // members below when no observation has ever arrived.
+    // confidence-counter convention above.
     double M_pos_z; //!< estimated z (height) position
     int M_pos_z_count; //!< cycle count since the last z observation
     double M_vel_z; //!< estimated z (height) velocity
@@ -273,6 +268,15 @@ public:
     int posZCount() const { return M_pos_z_count; }
 
     /*!
+      \brief verify z-position accuracy
+      \return true if z has a sufficiently recent observation
+    */
+    bool posZValid() const
+      {
+        return M_pos_z_count < S_pos_count_thr;
+      }
+
+    /*!
       \brief v20. get estimated z (height) velocity
       \return z velocity value
     */
@@ -285,6 +289,15 @@ public:
     int velZCount() const { return M_vel_z_count; }
 
     /*!
+      \brief verify z-velocity accuracy
+      \return true if vertical velocity has a sufficiently recent observation
+    */
+    bool velZValid() const
+      {
+        return M_vel_z_count < S_vel_count_thr;
+      }
+
+    /*!
       \brief v20. get the estimated 3D position (ground-plane pos() + height posZ()).
       \return new Vector3D combining the existing 2D belief with the z belief
     */
@@ -292,16 +305,14 @@ public:
 
     /*!
       \brief v20. check whether the ball is believed to be on the ground.
-      True when the z belief is both reasonably fresh (mirrors the same
-      confidence-counter convention as posValid()) and effectively zero.
-      Always true on a 2d_mode=true (or pre-v20) server, since z never
-      leaves its constructed default of 0.0 there.
+      Unknown or stale z is treated conservatively as grounded.  A fresh
+      nonzero z observation means the ball is airborne.
       \return true if the ball is (believed to be) grounded
     */
     bool isGrounded() const
       {
-          return ( M_pos_z_count < S_pos_count_thr
-                    && std::fabs( M_pos_z ) < Vector3D::EPSILON );
+          return ( ! posZValid()
+                    || std::fabs( M_pos_z ) < Vector3D::EPSILON );
       }
 
     /*!

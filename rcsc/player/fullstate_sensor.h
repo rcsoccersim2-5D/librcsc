@@ -55,9 +55,13 @@ public:
     struct BallT {
         Vector2D pos_; //!< ball position
         Vector2D vel_; //!< ball velocity
-        //! v20. ball height (ground truth); stays 0.0 on a pre-v20 server
+        //! true when the fullstate message carried the v20 ball height
+        bool has_pos_z_;
+        //! v20. ball height (ground truth)
         double pos_z_;
-        //! v20. ball vertical velocity (ground truth); stays 0.0 on a pre-v20 server
+        //! true when the fullstate message carried the v20 vertical velocity
+        bool has_vel_z_;
+        //! v20. ball vertical velocity (ground truth)
         double vel_z_;
 
         /*!
@@ -66,7 +70,9 @@ public:
         BallT()
             : pos_( 0.0, 0.0 ),
               vel_( 0.0, 0.0 ),
+              has_pos_z_( false ),
               pos_z_( 0.0 ),
+              has_vel_z_( false ),
               vel_z_( 0.0 )
           { }
     };
@@ -206,9 +212,11 @@ private:
     /*!
       \brief analyze raw server message (protcol version 8 or later)
       \param msg server message
+      \param version negotiated protocol version
     */
     void parseV8( const char * msg,
-                  const SideID our_side );
+                  const SideID our_side,
+                  const double version );
 
     /*!
       \brief reverse the coordinate system

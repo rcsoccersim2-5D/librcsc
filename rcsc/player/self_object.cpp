@@ -1061,6 +1061,7 @@ SelfObject::updateBallInfo( const BallObject & ball )
 
         if ( ball.distFromSelf() <= playerType().kickableArea() - buf
              && ( SP.is2dMode()
+                  || ! ball.posZValid()
                   || ball.posZ() <= SP.playerHeight() ) )
         {
             M_kickable = true;
@@ -1088,6 +1089,7 @@ SelfObject::updateBallInfo( const BallObject & ball )
     // tackle/foul probability
     //
     if ( ! SP.is2dMode()
+         && ball.posZValid()
          && ball.posZ() > SP.tackleHeight() )
     {
         // v20 -- 3D ball-flight extension: ball is too high off the ground
@@ -1165,6 +1167,7 @@ SelfObject::updateKickableState( const BallObject & ball,
          && ball.seenPosCount() == 0
          && ball.distFromSelf() < playerType().kickableArea() - 0.001
          && ( ServerParam::i().is2dMode()
+              || ! ball.posZValid()
               || ball.posZ() <= ServerParam::i().playerHeight() ) )
     {
 

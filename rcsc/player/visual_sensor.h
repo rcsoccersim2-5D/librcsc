@@ -51,7 +51,6 @@ class VisualSensor {
 public:
     static const double DIST_ERR; //!< error value
     static const double DIR_ERR; //!< error value
-    static const double ELEVATION_ERR; //!< v20. sentinel for "no elevation token sent" (pre-v20 servers / 2d_mode=true)
 
     /*!
       \brief seen object type
@@ -195,17 +194,27 @@ public:
     struct BallT
         : public MovableT {
 
-        //! v20. seen elevation angle (radians); stays at ELEVATION_ERR when
-        //! the server never sends the trailing token (pre-v20 protocol, or
-        //! a v20+ server running with 2d_mode=true).
-        double elevation_;
+        //! true when the observation contains a distance (false for v20 low quality)
+        bool has_dist_;
+        //! true when the observation contains the raw v20 ball height
+        bool has_pos_z_;
+        //! raw v20 ball height in metres
+        double pos_z_;
+        //! true when the observation contains raw v20 vertical velocity
+        bool has_vel_z_;
+        //! raw v20 vertical velocity in metres per simulation cycle
+        double vel_z_;
 
         /*!
           \brief init member variables by error value
         */
         BallT()
             : MovableT()
-            , elevation_( VisualSensor::ELEVATION_ERR )
+            , has_dist_( false )
+            , has_pos_z_( false )
+            , pos_z_( 0.0 )
+            , has_vel_z_( false )
+            , vel_z_( 0.0 )
           { }
         /*!
           \brief clear all data
@@ -213,7 +222,11 @@ public:
         void reset()
           {
               MovableT::reset();
-              elevation_ = VisualSensor::ELEVATION_ERR;
+              has_dist_ = false;
+              has_pos_z_ = false;
+              pos_z_ = 0.0;
+              has_vel_z_ = false;
+              vel_z_ = 0.0;
           }
     };
 
@@ -461,6 +474,7 @@ private:
       get positional data from object info token
     */
     bool parseBall( const char * tok,
+                    const double version,
                     BallT * info );
 
     /*!

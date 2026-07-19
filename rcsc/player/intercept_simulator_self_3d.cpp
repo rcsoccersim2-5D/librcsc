@@ -59,6 +59,11 @@ InterceptSimulatorSelf3D::simulate( const WorldModel & wm,
         return true;
     }
 
+    if ( ! ball.posZValid() )
+    {
+        return false;
+    }
+
     const double z0 = ball.posZ();
     const double vz0 = ball.velZ();
     const double g = SP.gravity();
@@ -69,6 +74,11 @@ InterceptSimulatorSelf3D::simulate( const WorldModel & wm,
     {
         result = Intercept3D( 0, ball.pos3D() );
         return true;
+    }
+
+    if ( ! ball.velZValid() )
+    {
+        return false;
     }
 
     // Closed-form evaluation of rcssserver's discrete semi-implicit-Euler
