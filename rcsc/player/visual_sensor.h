@@ -194,11 +194,27 @@ public:
     struct BallT
         : public MovableT {
 
+        //! true when the observation contains a distance (false for v20 low quality)
+        bool has_dist_;
+        //! true when the observation contains the raw v20 ball height
+        bool has_pos_z_;
+        //! raw v20 ball height in metres
+        double pos_z_;
+        //! true when the observation contains raw v20 vertical velocity
+        bool has_vel_z_;
+        //! raw v20 vertical velocity in metres per simulation cycle
+        double vel_z_;
+
         /*!
           \brief init member variables by error value
         */
         BallT()
             : MovableT()
+            , has_dist_( false )
+            , has_pos_z_( false )
+            , pos_z_( 0.0 )
+            , has_vel_z_( false )
+            , vel_z_( 0.0 )
           { }
         /*!
           \brief clear all data
@@ -206,6 +222,11 @@ public:
         void reset()
           {
               MovableT::reset();
+              has_dist_ = false;
+              has_pos_z_ = false;
+              pos_z_ = 0.0;
+              has_vel_z_ = false;
+              vel_z_ = 0.0;
           }
     };
 
@@ -453,6 +474,7 @@ private:
       get positional data from object info token
     */
     bool parseBall( const char * tok,
+                    const double version,
                     BallT * info );
 
     /*!

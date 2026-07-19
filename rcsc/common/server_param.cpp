@@ -356,6 +356,22 @@ constexpr double FOCUS_DIST_NOISE_RATE = 0.0125;
 constexpr double LAND_DIST_NOISE_RATE = 0.00125;
 constexpr double LAND_FOCUS_DIST_NOISE_RATE = 0.00125;
 
+// 20.0 -- 3D ball-flight extension. Defaults mirror rcssserver's own
+// constexpr defaults in src/serverparam.cpp so an agent that never
+// receives these fields (pre-v20 server) still behaves exactly as if
+// 2d_mode were on.
+constexpr bool TWO_D_MODE = true;
+constexpr double PLAYER_HEIGHT = 2.0;
+constexpr double GOAL_HEIGHT = 2.0;
+constexpr double GRAVITY = 0.1;
+constexpr double BALL_BOUNCE_RESTITUTION = 0.5;
+constexpr double BOUNCE_STOP_SPEED = 0.05;
+constexpr double ROLL_STOP_SPEED = 0.05;
+
+constexpr double HEIGHT_POWER_COST = 0.25;
+constexpr bool PRECISE_BOUNCE_TIMING = true;
+constexpr double TACKLE_HEIGHT = 0.5;
+
 }
 
 /*
@@ -688,6 +704,18 @@ ServerParam::setDefaultParam()
     M_long_kick_power_factor = 2.0;
     M_long_kick_delay = 2;
 
+    // 20.0
+    M_2d_mode = TWO_D_MODE;
+    M_player_height = PLAYER_HEIGHT;
+    M_goal_height = GOAL_HEIGHT;
+    M_gravity = GRAVITY;
+    M_ball_bounce_restitution = BALL_BOUNCE_RESTITUTION;
+    M_bounce_stop_speed = BOUNCE_STOP_SPEED;
+    M_roll_stop_speed = ROLL_STOP_SPEED;
+    M_height_power_cost = HEIGHT_POWER_COST;
+    M_precise_bounce_timing = PRECISE_BOUNCE_TIMING;
+    M_tackle_height = TACKLE_HEIGHT;
+
     setAdditionalParam();
 }
 
@@ -998,6 +1026,18 @@ ServerParam::createMap()
         ( "focus_dist_noise_rate", "", &M_focus_dist_noise_rate )
         ( "land_dist_noise_rate", "", &M_land_dist_noise_rate )
         ( "land_focus_dist_noise_rate", "", &M_land_focus_dist_noise_rate )
+        // 20.0 -- 3D ball-flight extension; wire-name strings must match
+        // rcssserver's src/serverparam.cpp v20 addParam() registrations verbatim.
+        ( "2d_mode", "", &M_2d_mode )
+        ( "player_height", "", &M_player_height )
+        ( "goal_height", "", &M_goal_height )
+        ( "gravity", "", &M_gravity )
+        ( "ball_bounce_restitution", "", &M_ball_bounce_restitution )
+        ( "bounce_stop_speed", "", &M_bounce_stop_speed )
+        ( "roll_stop_speed", "", &M_roll_stop_speed )
+        ( "height_power_cost", "", &M_height_power_cost )
+        ( "precise_bounce_timing", "", &M_precise_bounce_timing )
+        ( "tackle_height", "", &M_tackle_height )
         // XXX
         //( "random_seed", "", &M_random_seed )
         ;

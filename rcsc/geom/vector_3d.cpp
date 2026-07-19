@@ -1,8 +1,8 @@
 // -*-c++-*-
 
 /*!
-  \file version.h
-  \brief version number Header File
+  \file vector_3d.cpp
+  \brief 3D vector class Source File.
 */
 
 /*
@@ -29,30 +29,20 @@
 
 /////////////////////////////////////////////////////////////////////
 
-#ifndef RCSC_VERSION_H
-#define RCSC_VERSION_H
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "vector_3d.h"
+
+#include <limits>
 
 namespace rcsc {
 
-//! supported client protocol version
-constexpr double MAX_PROTOCOL_VERSION = 20.0;
+const double Vector3D::EPSILON = 1.0e-6;
 
-/*-------------------------------------------------------------------*/
-/*!
-  \brief get the copyright message.
-  \return copyright message.
- */
-const char *
-copyright();
+const double Vector3D::ERROR_VALUE = std::numeric_limits< double >::max();
 
-/*-------------------------------------------------------------------*/
-/*!
-  \brief get the package version number string.
-  \return package version number string.
- */
-const char *
-version();
+const Vector3D Vector3D::INVALIDATED( Vector3D::ERROR_VALUE, Vector3D::ERROR_VALUE, Vector3D::ERROR_VALUE );
 
 }
-
-#endif

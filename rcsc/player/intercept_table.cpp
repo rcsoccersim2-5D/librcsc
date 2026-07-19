@@ -354,6 +354,18 @@ InterceptTable::predictSelf( const WorldModel & wm )
     }
     M_self_simulator->simulate( wm, max_step, M_self_results );
 
+    // Custom self simulators are a public extension point.  Enforce the
+    // server's height gate at the table boundary so an external simulator
+    // cannot publish an above-height minimum.
+    M_self_results.erase( std::remove_if( M_self_results.begin(),
+                                          M_self_results.end(),
+                                          [&wm]( const Intercept & i ) {
+                                              return ! wm.ballTrajectory().canControlAt(
+                                                  i.reachStep(),
+                                                  ServerParam::i().playerHeight() );
+                                          } ),
+                          M_self_results.end() );
+
     if ( M_self_results.empty() )
     {
         std::cerr << wm.self().unum() << ' '
@@ -422,8 +434,7 @@ InterceptTable::predictTeammate( const WorldModel & wm )
                       M_first_teammate->pos().x, M_first_teammate->pos().y );
     }
 
-    InterceptSimulatorPlayer sim( wm.ball().pos(),
-                                  ( wm.kickableOpponent() ? Vector2D( 0.0, 0.0 ) : wm.ball().vel() ) );
+    const InterceptSimulatorPlayer sim( wm.ballTrajectory() );
 
     for ( const PlayerObject * t : wm.teammatesFromBall() )
     {
@@ -509,8 +520,7 @@ InterceptTable::predictOpponent( const WorldModel & wm )
                       M_first_opponent->pos().x, M_first_opponent->pos().y );
     }
 
-    InterceptSimulatorPlayer sim( wm.ball().pos(),
-                                  ( wm.kickableOpponent() ? Vector2D( 0.0, 0.0 ) : wm.ball().vel() ) );
+    const InterceptSimulatorPlayer sim( wm.ballTrajectory() );
 
     for ( const PlayerObject * o : wm.opponentsFromBall() )
     {

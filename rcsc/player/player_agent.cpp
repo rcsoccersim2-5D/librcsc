@@ -2763,7 +2763,8 @@ PlayerAgent::Impl::printDebug()
  */
 bool
 PlayerAgent::doKick( const double & power,
-                     const AngleDeg & rel_dir )
+                     const AngleDeg & rel_dir,
+                     const double & loft )
 {
     if ( ! world().self().isKickable() )
     {
@@ -2787,7 +2788,40 @@ PlayerAgent::doKick( const double & power,
         return false;
     }
 
-    M_effector.setKick( power, rel_dir );
+    M_effector.setKick( power, rel_dir, loft );
+    return true;
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+
+*/
+bool
+PlayerAgent::doChestTrap()
+{
+    if ( ! world().self().isKickable() )
+    {
+        dlog.addText( Logger::ACTION,
+                      __FILE__" (doChestTrap) but not kickable" );
+        std::cerr << world().teamName() << ' '
+                  << world().self().unum() << ": "
+                  << world().time()
+                  << " doChestTrap(). but not kickable" << std::endl;
+        return false;
+    }
+    if ( world().self().isFrozen() )
+    {
+        dlog.addText( Logger::ACTION,
+                      __FILE__" (doChestTrap) but in tackle expire period  %d",
+                      world().self().tackleExpires() );
+        std::cerr << world().teamName() << ' '
+                  << world().self().unum() << ": "
+                  << world().time()
+                  << " Now Tackle expire period" << std::endl;
+        return false;
+    }
+
+    M_effector.setChestTrap();
     return true;
 }
 

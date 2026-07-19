@@ -17,6 +17,7 @@ add_library(rcsc_geom OBJECT
   triangle_2d.cpp
   triangulation.cpp
   vector_2d.cpp
+  vector_3d.cpp
   voronoi_diagram.cpp
   voronoi_diagram_triangle.cpp
   )
@@ -49,6 +50,7 @@ install(FILES
   triangle_2d.h
   triangulation.h
   vector_2d.h
+  vector_3d.h
   voronoi_diagram.h
   voronoi_diagram_triangle.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/rcsc/geom

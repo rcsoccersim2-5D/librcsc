@@ -7,11 +7,13 @@ librcsc_player_la_SOURCES = \
 	action_effector.cpp \
 	audio_sensor.cpp \
 	ball_object.cpp \
+	ball_trajectory.cpp \
 	body_sensor.cpp \
 	debug_client.cpp \
 	fullstate_sensor.cpp \
 	intercept.cpp \
 	intercept_simulator_player.cpp \
+	intercept_simulator_self_3d.cpp \
 	intercept_simulator_self_v17.cpp \
 	intercept_table.cpp \
 	localization_default.cpp \
@@ -38,6 +40,7 @@ librcsc_playerinclude_HEADERS = \
 	action_effector.h \
 	audio_sensor.h \
 	ball_object.h \
+	ball_trajectory.h \
 	body_sensor.h \
 	debug_client.h \
 	free_message.h \
@@ -45,6 +48,7 @@ librcsc_playerinclude_HEADERS = \
 	intercept.h \
 	intercept_simulator_player.h \
 	intercept_simulator_self.h \
+	intercept_simulator_self_3d.h \
 	intercept_simulator_self_v17.h \
 	intercept_table.h \
 	localization.h \

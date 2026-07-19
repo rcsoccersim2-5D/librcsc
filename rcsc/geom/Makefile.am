@@ -21,6 +21,7 @@ librcsc_geom_la_SOURCES = \
 	triangle_2d.cpp \
 	triangulation.cpp \
 	vector_2d.cpp \
+	vector_3d.cpp \
 	voronoi_diagram.cpp \
 	voronoi_diagram_triangle.cpp
 
@@ -48,6 +49,7 @@ librcsc_geominclude_HEADERS = \
 	triangle_2d.h \
 	triangulation.h \
 	vector_2d.h \
+	vector_3d.h \
 	voronoi_diagram.h \
 	voronoi_diagram_triangle.h
 

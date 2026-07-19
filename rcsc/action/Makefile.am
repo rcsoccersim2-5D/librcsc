@@ -20,6 +20,7 @@ librcsc_action_la_SOURCES = \
 	body_kick_to_relative.cpp \
 	body_pass.cpp \
 	body_smart_kick.cpp \
+	body_smart_kick_3d.cpp \
 	body_stop_ball.cpp \
 	body_stop_dash.cpp \
 	intention_dribble2008.cpp \
@@ -85,6 +86,7 @@ librcsc_actioninclude_HEADERS = \
 	body_kick_to_relative.h \
 	body_pass.h \
 	body_smart_kick.h \
+	body_smart_kick_3d.h \
 	body_stop_ball.h \
 	body_stop_dash.h \
 	body_tackle_to_point.h \

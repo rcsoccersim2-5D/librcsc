@@ -656,6 +656,19 @@ private:
     // 999
     int M_max_monitors;
 
+    // 20.0
+    bool M_2d_mode;
+    double M_player_height;
+    double M_goal_height;
+    double M_gravity;
+    double M_ball_bounce_restitution;
+
+    double M_bounce_stop_speed;
+    double M_roll_stop_speed;
+    double M_height_power_cost;
+    bool M_precise_bounce_timing;
+    double M_tackle_height;
+
     //--------------------------------------------------------
     // additional params
     double M_catchable_area; //!< real catchable length (diagonal line length)
@@ -1142,6 +1155,18 @@ public:
     int randomSeed() const { return M_random_seed; }
     double longKickPowerFactor() const { return M_long_kick_power_factor; }
     int longKickDelay() const { return M_long_kick_delay; }
+
+    // v20 -- 3D ball-flight extension (see rcssserver's 2d_mode ServerParam)
+    bool is2dMode() const { return M_2d_mode; }
+    double playerHeight() const { return M_player_height; }
+    double goalHeight() const { return M_goal_height; }
+    double gravity() const { return M_gravity; }
+    double ballBounceRestitution() const { return M_ball_bounce_restitution; }
+    double bounceStopSpeed() const { return M_bounce_stop_speed; }
+    double rollStopSpeed() const { return M_roll_stop_speed; }
+    double heightPowerCost() const { return M_height_power_cost; }
+    bool preciseBounceTiming() const { return M_precise_bounce_timing; }
+    double tackleHeight() const { return M_tackle_height; }
 
 
     // automatically defined values

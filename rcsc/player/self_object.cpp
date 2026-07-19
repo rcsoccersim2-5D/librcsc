@@ -1059,7 +1059,10 @@ SelfObject::updateBallInfo( const BallObject & ball )
         if ( ball.seenPosCount() >= 1 ) buf = 0.155;
         if ( ball.seenPosCount() >= 2 ) buf = 0.255;
 
-        if ( ball.distFromSelf() <= playerType().kickableArea() - buf )
+        if ( ball.distFromSelf() <= playerType().kickableArea() - buf
+             && ( SP.is2dMode()
+                  || ! ball.posZValid()
+                  || ball.posZ() <= SP.playerHeight() ) )
         {
             M_kickable = true;
         }
@@ -1067,6 +1070,7 @@ SelfObject::updateBallInfo( const BallObject & ball )
         M_kick_rate = ptype.kickRate( ball.distFromSelf(),
                                       ( ball.angleFromSelf() - body() ).degree() );
     }
+
 
     //
     // catch probability
@@ -1084,6 +1088,20 @@ SelfObject::updateBallInfo( const BallObject & ball )
     //
     // tackle/foul probability
     //
+    if ( ! SP.is2dMode()
+         && ball.posZValid()
+         && ball.posZ() > SP.tackleHeight() )
+    {
+        // v20 -- 3D ball-flight extension: ball is too high off the ground
+        // to be tackled/fouled.
+        M_tackle_probability = 0.0;
+        M_foul_probability = 0.0;
+
+        dlog.addText( Logger::WORLD,
+                      __FILE__" (updateBallInfo) tackle/foul disabled: ball posZ=%.3f > tackle_height=%.3f",
+                      ball.posZ(), SP.tackleHeight() );
+    }
+    else
     {
         const Vector2D player2ball = ( ball.pos() - pos() ).rotatedVector( - body() );
 
@@ -1133,6 +1151,8 @@ SelfObject::updateBallInfo( const BallObject & ball )
     }
 }
 
+
+
 /*-------------------------------------------------------------------*/
 /*!
 
@@ -1145,7 +1165,10 @@ SelfObject::updateKickableState( const BallObject & ball,
 {
     if ( ! M_kickable
          && ball.seenPosCount() == 0
-         && ball.distFromSelf() < playerType().kickableArea() - 0.001 )
+         && ball.distFromSelf() < playerType().kickableArea() - 0.001
+         && ( ServerParam::i().is2dMode()
+              || ! ball.posZValid()
+              || ball.posZ() <= ServerParam::i().playerHeight() ) )
     {
 
         if ( self_reach_cycle >= 10 // XXX magic number XXX

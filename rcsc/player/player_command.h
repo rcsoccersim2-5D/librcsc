@@ -63,6 +63,7 @@ public:
         KICK,
         CATCH,
         TACKLE,
+        CHEST_TRAP, //!< v20 3D extension: deaden ball velocity while kickable
         // support commands
         TURN_NECK,
         CHANGE_VIEW,
@@ -717,6 +718,7 @@ public:
   <pre>
   Format:
   <- (kick <power> <dir>)
+  <- (kick <power> <dir> <loft>)   v20 3D extension, loft != 0.0 only
   </pre>
 */
 class PlayerKickCommand
@@ -724,16 +726,21 @@ class PlayerKickCommand
 private:
     double M_power; //!< kick power
     double M_dir; //!< relative to body angle
+    double M_loft; //!< v20 3D extension: loft angle (0.0 = flat/grounded kick, same as pre-v20 behavior)
 public:
     /*!
       \brief construct with kick parameters
       \param power kick power
       \param dir kick accel dir relative to body
+      \param loft v20 3D extension loft angle. defaults to 0.0 (flat/grounded kick,
+      byte-for-byte the pre-v20 wire format -- see toCommandString()).
     */
     PlayerKickCommand( const double & power,
-                       const double & dir )
+                       const double & dir,
+                       const double & loft = 0.0 )
         : M_power( power )
         , M_dir( dir )
+        , M_loft( loft )
       { }
 
     /*!
@@ -777,6 +784,69 @@ public:
     double kickDir() const
       {
           return M_dir;
+      }
+
+    /*!
+      \brief get kick command parameter
+      \return v20 3D extension loft angle (0.0 if not a lofted kick)
+     */
+    double kickLoft() const
+      {
+          return M_loft;
+      }
+};
+
+//////////////////////////////////////////////////////////////////////
+/*!
+  \class PlayerChestTrapCommand
+  \brief v20 3D extension: deaden the ball's velocity while it is kickable
+
+  <pre>
+  Format:
+  <- (chest_trap)
+  </pre>
+
+  Mirrors rcssserver's new (chest_trap) command (Player::chest_trap() /
+  Stadium::chestTrap()): silently rejected server-side (no error response)
+  when 2d_mode==true or the ball is not currently kickable, same as the
+  existing silent-reject pattern used by (move). Occupies the same
+  per-cycle body-command slot as kick/dash/turn/move/catch/tackle -- it is
+  mutually exclusive with those in a single cycle.
+*/
+class PlayerChestTrapCommand
+    : public PlayerBodyCommand {
+private:
+
+public:
+    /*!
+      \brief constructor. nothing to do
+    */
+    PlayerChestTrapCommand()
+      { }
+
+    /*!
+      \brief get command type
+      \return command type Id
+    */
+    Type type() const
+      {
+          return CHEST_TRAP;
+      }
+
+    /*!
+      \brief put command string to ostream
+      \param to reference to the output stream
+      \return reference to the output stream
+    */
+    std::ostream & toCommandString( std::ostream & to ) const;
+
+    /*!
+      \brief get command name
+      \return command name string
+    */
+    std::string name() const
+      {
+          return std::string( "chest_trap" );
       }
 };
 

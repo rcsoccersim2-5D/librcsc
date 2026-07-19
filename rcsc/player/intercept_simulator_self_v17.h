@@ -40,6 +40,7 @@
 namespace rcsc {
 
 class BallObject;
+class BallTrajectory3D;
 class SelfObject;
 class WorldModel;
 class StaminaModel;
@@ -49,6 +50,7 @@ class InterceptSimulatorSelfV17
 private:
 
     Vector2D M_ball_vel;
+    const BallTrajectory3D * M_ball_trajectory = nullptr;
 
 public:
 
@@ -66,7 +68,10 @@ private:
     const Vector2D & ballVel() const
     {
         return M_ball_vel;
-    }
+      }
+
+    bool ballPositionAt( int cycle, Vector2D & result ) const;
+    bool ballControllableAt( int cycle ) const;
 
     //
     // one step simulation

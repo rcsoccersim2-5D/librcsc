@@ -183,7 +183,24 @@ PlayerTurnCommand::toCommandString( std::ostream & to ) const
 std::ostream &
 PlayerKickCommand::toCommandString( std::ostream & to ) const
 {
+    // backward-compatible: only append the v20 loft argument when it is
+    // actually non-zero, so a plain (never-loft) kick emits byte-for-byte
+    // the same 2-arg wire text as before this extension existed.
+    if ( M_loft != 0.0 )
+    {
+        return to << "(kick " << M_power << " " << M_dir << " " << M_loft << ")";
+    }
     return to << "(kick " << M_power << " " << M_dir << ")";
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+
+*/
+std::ostream &
+PlayerChestTrapCommand::toCommandString( std::ostream & to ) const
+{
+    return to << "(chest_trap)";
 }
 
 /*-------------------------------------------------------------------*/

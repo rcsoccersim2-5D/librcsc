@@ -113,6 +113,29 @@ get_penalty_step( const PlayerObject & p )
              : 0 );
 }
 
+/*-------------------------------------------------------------------*/
+inline
+BallTrajectory3D
+make_planar_trajectory( const Vector2D & ball_pos,
+                        const Vector2D & ball_vel )
+{
+    return BallTrajectory3D( Vector3D( ball_pos.x, ball_pos.y, 0.0 ),
+                             Vector3D( ball_vel.x, ball_vel.y, 0.0 ),
+                             false,
+                             false );
+}
+
+/*-------------------------------------------------------------------*/
+inline
+AngleDeg
+trajectory_move_angle( const BallTrajectory3D & trajectory )
+{
+    BallTrajectory3D::State state;
+    return ( trajectory.stateAt( 0, state )
+             ? state.vel.xy().th()
+             : AngleDeg( 0.0 ) );
+}
+
 }
 
 /*-------------------------------------------------------------------*/
@@ -132,15 +155,24 @@ InterceptSimulatorPlayer::PlayerData::inertiaPoint( const int step ) const
  */
 InterceptSimulatorPlayer::InterceptSimulatorPlayer( const Vector2D & ball_pos,
                                                     const Vector2D & ball_vel )
-    : M_ball_move_angle( ball_vel.th() )
+    : InterceptSimulatorPlayer( make_planar_trajectory( ball_pos, ball_vel ) )
 {
-    createBallCache( ball_pos, ball_vel );
+}
+
+/*-------------------------------------------------------------------*/
+InterceptSimulatorPlayer::InterceptSimulatorPlayer( const BallTrajectory3D & trajectory )
+    : M_ball_cache(),
+      M_ball_state_cache(),
+      M_ball_control_cache(),
+      M_ball_trajectory( trajectory ),
+      M_ball_move_angle( trajectory_move_angle( trajectory ) )
+{
+    createBallCache();
 }
 
 /*-------------------------------------------------------------------*/
 void
-InterceptSimulatorPlayer::createBallCache( const Vector2D & ball_pos,
-                                           const Vector2D & ball_vel )
+InterceptSimulatorPlayer::createBallCache()
 {
     constexpr int MAX_STEP = 50;
 
@@ -151,27 +183,33 @@ InterceptSimulatorPlayer::createBallCache( const Vector2D & ball_pos,
     const double max_y = ( SP.keepawayMode()
                            ? SP.keepawayWidth() * 0.5
                            : SP.pitchHalfWidth() + 5.0 );
-    const double bdecay = SP.ballDecay();
-
     M_ball_cache.clear();
+    M_ball_state_cache.clear();
+    M_ball_control_cache.clear();
     M_ball_cache.reserve( MAX_STEP );
-
-    Vector2D bpos = ball_pos;
-    Vector2D bvel = ball_vel;
-    double bspeed = bvel.r();
+    M_ball_state_cache.reserve( MAX_STEP );
+    M_ball_control_cache.reserve( MAX_STEP );
 
     for ( int i = 0; i < MAX_STEP; ++i )
     {
-        M_ball_cache.push_back( bpos );
+        BallTrajectory3D::State state;
+        if ( ! M_ball_trajectory.stateAt( i, state ) ) break;
 
-        if ( bspeed < 0.005 && i >= 10 )
+        const Vector2D bpos = state.pos.xy();
+        M_ball_cache.push_back( bpos );
+        M_ball_state_cache.push_back( state );
+        M_ball_control_cache.push_back( M_ball_trajectory.canControlAt( i,
+                                                                         SP.playerHeight() ) );
+
+        // Keep the historical planar cache length/early-stop behavior.  The
+        // trajectory-aware 3D path remains available for airborne samples.
+        if ( M_ball_trajectory.isPlanar()
+             && std::sqrt( state.vel.x * state.vel.x
+                           + state.vel.y * state.vel.y ) < 0.005
+             && i >= 10 )
         {
             break;
         }
-
-        bpos += bvel;
-        bvel *= bdecay;
-        bspeed *= bdecay;
 
         if ( max_x < bpos.absX()
              || max_y < bpos.absY() )
@@ -195,7 +233,9 @@ InterceptSimulatorPlayer::simulate( const WorldModel & wm,
         return 1000;
     }
 
-    if ( player.isKickable( 0.0 ) )
+    if ( player.isKickable( 0.0 )
+         && ! M_ball_control_cache.empty()
+         && M_ball_control_cache.front() )
     {
         return 0;
     }
@@ -226,7 +266,7 @@ InterceptSimulatorPlayer::simulate( const WorldModel & wm,
                            get_penalty_step( player ) );
 
     const int min_step = estimateMinStep( data );
-    const int max_step = M_ball_cache.size() - 1;
+    const int max_step = static_cast< int >( M_ball_cache.size() ) - 1;
 
 #ifdef DEBUG
     dlog.addText( Logger::INTERCEPT,
@@ -246,6 +286,7 @@ InterceptSimulatorPlayer::simulate( const WorldModel & wm,
 
     for ( int total_step = min_step; total_step < max_step; ++total_step )
     {
+        if ( ! M_ball_control_cache[total_step] ) continue;
         const Vector2D & ball_pos = M_ball_cache[total_step];
 #ifdef DEBUG2
         dlog.addText( Logger::INTERCEPT,
@@ -295,6 +336,8 @@ InterceptSimulatorPlayer::simulate( const WorldModel & wm,
     }
 
     if ( goalie
+         && ! M_ball_cache.empty()
+         && M_ball_control_cache.back()
          && ( M_ball_cache.back().absX() < pen_area_x
               || pen_area_y < M_ball_cache.back().absY() ) )
     {
@@ -483,8 +526,22 @@ InterceptSimulatorPlayer::canReachAfterDash( const PlayerData & data,
 int
 InterceptSimulatorPlayer::predictFinal( const PlayerData & data ) const
 {
-    Vector2D ball_pos = M_ball_cache.back();
-    int ball_step = M_ball_cache.size() - 1;
+    if ( M_ball_cache.empty() ) return 1000;
+
+    int ball_step = -1;
+    for ( int i = static_cast< int >( M_ball_control_cache.size() ) - 1;
+          i >= 0;
+          --i )
+    {
+        if ( M_ball_control_cache[i] )
+        {
+            ball_step = i;
+            break;
+        }
+    }
+    if ( ball_step < 0 ) return 1000;
+
+    const Vector2D ball_pos = M_ball_cache[ball_step];
 
     Vector2D inertia_pos = data.inertiaPoint( 100 );
 
@@ -502,6 +559,12 @@ InterceptSimulatorPlayer::predictFinal( const PlayerData & data ) const
     int bonus_step = std::max( 0, data.bonus_step_ - n_turn );
 
     int step = std::max( ball_step, n_turn + n_dash - bonus_step + data.penalty_step_ );
+    if ( step < 0
+         || step >= static_cast< int >( M_ball_control_cache.size() )
+         || ! M_ball_control_cache[step] )
+    {
+        return 1000;
+    }
 #ifdef DEBUG
     dlog.addText( Logger::INTERCEPT,
                   "____No Solution. final point(%.2f %.2f)"

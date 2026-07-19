@@ -330,6 +330,7 @@ WorldModel::WorldModel()
       M_valid( true ),
       M_self(),
       M_ball(),
+      M_ball_trajectory(),
       M_our_goalie_unum( Unum_Unknown ),
       M_their_goalie_unum( Unum_Unknown ),
       M_offside_line_x( 0.0 ),
@@ -1387,6 +1388,18 @@ WorldModel::updateAfterFullstate( const FullstateSensor & fullstate,
     M_ball.updateByFullstate( fullstate.ball().pos_,
                               fullstate.ball().vel_,
                               self().pos() );
+
+    // v20 fullstate ball z/vel_z are ground truth.  Commit them only when
+    // the parser saw the corresponding wire fields; legacy fullstate
+    // messages must not fabricate fresh vertical observations at zero.
+    if ( fullstate.ball().has_pos_z_ )
+    {
+        M_ball.updateOnlyZ( fullstate.ball().pos_z_, 0 );
+    }
+    if ( fullstate.ball().has_vel_z_ )
+    {
+        M_ball.updateOnlyVelZ( fullstate.ball().vel_z_, 0 );
+    }
 }
 
 /*-------------------------------------------------------------------*/
@@ -1993,6 +2006,9 @@ WorldModel::updateJustBeforeDecision( const ActionEffector & act,
     M_ball.updateByGameMode( gameMode() );
 
     M_ball.updateSelfRelated( self(), prevBall() );
+    // Freeze one trajectory for all intercept and action consumers in this
+    // decision cycle after the final ball update.
+    M_ball_trajectory.update( M_ball );
     M_self.updateBallInfo( ball() );
 
     updatePlayerStateCache();
@@ -2234,6 +2250,31 @@ WorldModel::localizeBall( const VisualSensor & see,
                           const ActionEffector & act,
                           const GameTime & /*current*/ )
 {
+    if ( see.balls().empty() )
+    {
+        return;
+    }
+
+    const VisualSensor::BallT & seen_ball = see.balls().front();
+
+    // v20 sends raw vertical state.  Commit it before any face/2D
+    // localization checks so low-quality observations can still refresh z.
+    if ( seen_ball.has_pos_z_ )
+    {
+        M_ball.updateOnlyZ( seen_ball.pos_z_, 0 );
+    }
+    if ( seen_ball.has_vel_z_ )
+    {
+        M_ball.updateOnlyVelZ( seen_ball.vel_z_, 0 );
+    }
+
+    // A v20 low-quality ball contains only dir and z; there is no planar
+    // distance from which to localize x/y or estimate planar velocity.
+    if ( ! seen_ball.has_dist_ )
+    {
+        return;
+    }
+
     if ( ! self().faceValid() )
     {
         //std::cerr << "localizeBall : my face invalid conf= "
@@ -4145,8 +4186,11 @@ WorldModel::estimateMaybeKickableTeammate()
     s_update_time = this->time();
 
     M_maybe_kickable_teammate = nullptr;
+    const bool ball_height_controlled
+        = M_ball_trajectory.canControlAt( 0,
+                                          ServerParam::i().playerHeight() );
 
-    if ( this->kickableTeammate() )
+    if ( ball_height_controlled && this->kickableTeammate() )
     {
         dlog.addText( Logger::WORLD,
                       __FILE__":(estimateMaybeKickableTeammate) exist normal" );
@@ -4175,7 +4219,8 @@ WorldModel::estimateMaybeKickableTeammate()
             return;
         }
 
-        if ( t->distFromBall() < ( t->playerTypePtr()->kickableArea()
+        if ( ball_height_controlled
+             && t->distFromBall() < ( t->playerTypePtr()->kickableArea()
                                    + t->distFromSelf() * 0.05
                                    + this->ball().distFromSelf() * 0.05 ) )
         {
@@ -4202,6 +4247,10 @@ WorldModel::estimateMaybeKickableTeammate()
 void
 WorldModel::updateKickablePlayers()
 {
+    const bool ball_height_controlled
+        = M_ball_trajectory.canControlAt( 0,
+                                          ServerParam::i().playerHeight() );
+
     //
     // estimate teammate kickable state
     //
@@ -4214,7 +4263,8 @@ WorldModel::updateKickablePlayers()
             continue;
         }
 
-        if ( p->isKickable( 0.0 ) )
+        if ( ball_height_controlled
+             && p->isKickable( 0.0 ) )
         {
             M_kickable_teammate = p;
             dlog.addText( Logger::WORLD,
@@ -4248,7 +4298,8 @@ WorldModel::updateKickablePlayers()
             buf = std::min( 1.0,
                             p->distFromSelf() * 0.05 + ball().distFromSelf() * 0.05 );
 
-            if ( p->isKickable( -buf ) )
+            if ( ball_height_controlled
+                 && p->isKickable( -buf ) )
             {
                 M_maybe_kickable_opponent = p;
                 dlog.addText( Logger::WORLD,
@@ -4260,7 +4311,8 @@ WorldModel::updateKickablePlayers()
         buf = std::min( 0.5,
                         p->distFromSelf() * 0.02 + ball().distFromSelf() * 0.02 );
 
-        if ( p->isKickable( -buf ) )
+        if ( ball_height_controlled
+             && p->isKickable( -buf ) )
         {
             M_kickable_opponent = p;
             dlog.addText( Logger::WORLD,

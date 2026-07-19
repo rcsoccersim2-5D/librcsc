@@ -34,6 +34,7 @@
 
 #include <rcsc/player/self_object.h>
 #include <rcsc/player/ball_object.h>
+#include <rcsc/player/ball_trajectory.h>
 #include <rcsc/player/player_object.h>
 #include <rcsc/player/view_area.h>
 #include <rcsc/player/view_grid_map.h>
@@ -117,6 +118,7 @@ private:
     // field object instance
     SelfObject M_self; //!< self object
     BallObject M_ball; //!< current ball object
+    BallTrajectory3D M_ball_trajectory; //!< decision-cycle ball trajectory
     BallObject M_prev_ball; //!< ball object in the previous cycle
     PlayerObject::List M_teammates; //!< teammmates instance. at least, the side information is observed
     PlayerObject::List M_opponents; //!< opponents instance. at least, the side information is observed
@@ -770,6 +772,21 @@ public:
       \return const reference to the BallObject
     */
     const BallObject & ball() const { return M_ball; }
+
+    //! server-compatible ball trajectory frozen for this decision cycle
+    const BallTrajectory3D & ballTrajectory() const
+      {
+          return M_ball_trajectory;
+      }
+
+    //! checked ground-plane sample for a locally simulated intercept cycle
+    bool ballPositionAt( const int cycle,
+                         Vector2D & result ) const
+      {
+          return cycle >= 0
+              && cycle < 1000
+              && M_ball_trajectory.position2D( cycle, result );
+      }
 
     /*!
       \brief get the previous ball info

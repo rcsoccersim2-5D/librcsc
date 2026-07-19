@@ -149,6 +149,16 @@ Body_TackleToPoint::execute( PlayerAgent * agent )
     const WorldModel & wm = agent->world();
     const ServerParam & sp = ServerParam::i();
 
+    // v20 -- 3D ball-flight extension: ball is too high off the ground to
+    // be tackled. Belt-and-suspenders check mirroring the height gate
+    // already applied to SelfObject::tackleProbability().
+    if ( ! sp.is2dMode()
+         && wm.ball().posZValid()
+         && wm.ball().posZ() > sp.tackleHeight() )
+    {
+        return false;
+    }
+
     if ( wm.self().tackleProbability() < M_min_prob )
     {
         return false;
